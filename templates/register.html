@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register page</h1>
+    <form>
+        <label for="fname">First name:</label><br>
+        <input type="text" id="fname"><br>
+        <label for="lname">Last name:</label><br>
+        <input type="text" id="lname"><br>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email"><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password"><br>
+        <label for="cpassword">Confirm password:</label><br>
+        <input type="password" id="cpassword"><br>
+        <input type="submit" id="register">
+    </form>
+</body>
+</html>
