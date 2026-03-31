@@ -1,7 +1,30 @@
-#register {
+#login {
     cursor: pointer;
 }
 
+input[type=text]{
+    padding: 10px;
+    width: 15%;
+    border-radius: 10px;
+}
+
+input[type=email]{
+    padding: 10px;
+    width: 15%;
+    border-radius: 10px;
+}
+
+input[type=password]{
+    padding: 10px;
+    width: 15%;
+    border-radius: 10px;
+}
+
+input[type=submit]{
+
+}
+
 form {
-    background: red;
+    text-align: center;
+
 }
