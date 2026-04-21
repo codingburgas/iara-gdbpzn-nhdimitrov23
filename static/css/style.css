@@ -1,43 +1,31 @@
-/* General page styling */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
     background-color: white;
 }
 
-/* The navigation bar container */
 #topnav {
     width: 100%;
 }
 
-/* The list acting as the nav container */
 ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
     background-color: red;
-
-    /* These three lines push everything to the right */
     display: flex;
-    justify-content: flex-end;
 }
 
-/* Individual list items */
-ul li {
-    /* No floats needed with flexbox! */
-}
 
-/* The actual links/buttons */
 ul li a {
     display: block;
     color: white;
     text-align: center;
     padding: 14px 20px;
     text-decoration: none;
-    transition: background-color 0.3s; /* Smooth color change on hover */
+    transition: background-color 0.3s;
 }
 
-/* Hover effect */
 ul li a:hover {
     background-color: darkred;
 }
