@@ -1,17 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bg">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ГДПБЗН | Информационна система за управление на произшествия</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <title>Title</title>
+    <!-- Tabler Icons (optional, for better icons) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+
 </head>
 <body>
-    <div id="topnav">
-        <ul>
-            <li>test</li>
-            <li style="float:right"><a href="/login">Login</a></li>
-            <li style="float:right"><a href="/register">Register</a></li>
+
+<div class="gdp-root">
+    <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Главна страница на информационната система на ГДПБЗН</h2>
+
+    <nav class="gdp-nav">
+        <div class="gdp-logo">
+            <svg class="gdp-logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="6" fill="#c0392b" opacity="0.15"/>
+                <path d="M16 4C16 4 10 10 10 17C10 20.31 12.69 23 16 23C19.31 23 22 20.31 22 17C22 10 16 4 16 4Z" fill="#c0392b"/>
+                <path d="M16 13C16 13 13 16 13 18.5C13 20.16 14.34 21.5 16 21.5C17.66 21.5 19 20.16 19 18.5C19 16 16 13 16 13Z" fill="#e8e0d4" opacity="0.9"/>
+                <line x1="8" y1="27" x2="24" y2="27" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div>
+                <div class="gdp-logo-text">ГДПБЗН</div>
+                <div class="gdp-logo-sub">МВР България</div>
+            </div>
+        </div>
+
+        <ul class="gdp-nav-links">
+            <li><a href="{{ url_for('index') }}">Начало</a></li>
+            <li><a href="#">Произшествия</a></li>
+            <li><a href="#">Екипи</a></li>
+            <li><a href="#">Карта</a></li>
+            <li><a href="#">Отчети</a></li>
         </ul>
+
+        <div class="gdp-nav-actions">
+            <button class="gdp-btn-ghost" onclick="window.location.href='{{ url_for('login') }}'">Вход</button>
+            <button class="gdp-btn-primary" onclick="window.location.href='{{ url_for('register') }}'">Регистрация</button>
+        </div>
+    </nav>
+
+    <section class="gdp-hero">
+        <div class="gdp-hero-bg"></div>
+        <div class="gdp-hero-accent"></div>
+        <div class="gdp-hero-inner">
+            <div class="gdp-hero-badge">Оперативна система</div>
+            <h1>Управление на<br><span>произшествия</span><br>и екипи</h1>
+            <p>Единна платформа за координация на пожарогасителни и спасителни операции. Реално време, пълна видимост, ефективно управление.</p>
+            <div class="gdp-hero-cta">
+                <button class="gdp-btn-primary" style="padding: 10px 28px; font-size: 14px;">Влез в системата</button>
+                <button class="gdp-btn-ghost" style="padding: 10px 28px; font-size: 14px;">Научи повече</button>
+            </div>
+        </div>
+    </section>
+
+    <div class="gdp-stats-bar">
+        <div class="gdp-stat">
+            <div class="gdp-stat-num">112</div>
+            <div class="gdp-stat-label">Активни екипа</div>
+        </div>
+        <div class="gdp-stat">
+            <div class="gdp-stat-num">28</div>
+            <div class="gdp-stat-label">Текущи произшествия</div>
+        </div>
+        <div class="gdp-stat">
+            <div class="gdp-stat-label">Последно обновяване</div>
+            <div style="font-size:13px; color:#888; margin-top:4px;">преди 2 мин.</div>
+        </div>
+        <div class="gdp-stat">
+            <div class="gdp-stat-num" style="color:#4a9e6b;">онлайн</div>
+            <div class="gdp-stat-label">Статус на системата</div>
+        </div>
     </div>
+
+    <section class="gdp-modules">
+        <div class="gdp-section-label">Модули</div>
+        <div class="gdp-section-title">Основна функционалност</div>
+
+        <div class="gdp-alert-strip">
+            <div class="gdp-alert-dot"></div>
+            <div class="gdp-alert-text"><strong>Активно произшествие:</strong> Пожар — ул. „Цар Борис III" 47, София — 3 екипа на място</div>
+            <div class="gdp-alert-time">преди 4 мин.</div>
+        </div>
+
+        <div class="gdp-grid">
+            <div class="gdp-module-card">
+                <div class="gdp-module-icon" aria-hidden="true">
+                    <i class="ti ti-alert-triangle"></i>
+                </div>
+                <div class="gdp-module-name">Произшествия</div>
+                <div class="gdp-module-desc">Регистрация, разпределение и проследяване на всички активни и архивирани произшествия.</div>
+            </div>
+            <div class="gdp-module-card">
+                <div class="gdp-module-icon" aria-hidden="true">
+                    <i class="ti ti-users"></i>
+                </div>
+                <div class="gdp-module-name">Управление на екипи</div>
+                <div class="gdp-module-desc">Наличност на служители, смени, отпуски и разпределение към пожарни автомобили.</div>
+            </div>
+            <div class="gdp-module-card">
+                <div class="gdp-module-icon" aria-hidden="true">
+                    <i class="ti ti-map-2"></i>
+                </div>
+                <div class="gdp-module-name">Оперативна карта</div>
+                <div class="gdp-module-desc">Реално проследяване на местоположения, фронт на огъня и пълна ситуационна картина.</div>
+            </div>
+            <div class="gdp-module-card">
+                <div class="gdp-module-icon" aria-hidden="true">
+                    <i class="ti ti-checklist"></i>
+                </div>
+                <div class="gdp-module-name">Задачи и ресурси</div>
+                <div class="gdp-module-desc">Оперативни, логистични и административни задачи с отчет за изпълнение.</div>
+            </div>
+            <div class="gdp-module-card">
+                <div class="gdp-module-icon" aria-hidden="true">
+                    <i class="ti ti-message-circle"></i>
+                </div>
+                <div class="gdp-module-name">Комуникация</div>
+                <div class="gdp-module-desc">Чат канали, шаблонни съобщения, споделяне на снимки и видео връзка на живо.</div>
+            </div>
+            <div class="gdp-module-card">
+                <div class="gdp-module-icon" aria-hidden="true">
+                    <i class="ti ti-chart-bar"></i>
+                </div>
+                <div class="gdp-module-name">Отчети и анализи</div>
+                <div class="gdp-module-desc">Справки по произшествия, ефективност на екипи и превантивна дейност.</div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="gdp-footer">
+        <div class="gdp-footer-text">© 2025 ГДПБЗН — МВР България</div>
+        <ul class="gdp-footer-links">
+            <li><a href="#">Поверителност</a></li>
+            <li><a href="#">Условия</a></li>
+            <li><a href="#">Поддръжка</a></li>
+        </ul>
+    </footer>
+</div>
+
 </body>
 </html>

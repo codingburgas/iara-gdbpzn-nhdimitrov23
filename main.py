@@ -3,7 +3,7 @@ app = Flask(__name__)
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html')
-    @app.route('/')
+@app.route('/')
 def index():
     return render_template('index.html')
 @app.route('/login')

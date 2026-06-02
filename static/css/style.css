@@ -1,31 +1,367 @@
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: white;
-}
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500&display=swap');
 
-#topnav {
-    width: 100%;
-}
-
-ul {
-    list-style-type: none;
+.gdp-root * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    background-color: red;
+}
+
+.gdp-root {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: #0e0e0e;
+    color: #f0ece4;
+    min-height: 100vh;
+}
+
+.gdp-nav {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 56px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #c0392b;
 }
 
+.gdp-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-ul li a {
+.gdp-logo-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.gdp-logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: #e8e0d4;
+}
+
+.gdp-logo-sub {
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: -4px;
+}
+
+.gdp-nav-links {
+    display: flex;
+    gap: 0;
+    list-style: none;
+}
+
+.gdp-nav-links li a {
     display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 20px;
+    padding: 0 18px;
+    height: 56px;
+    line-height: 56px;
+    font-size: 13px;
+    color: #aaa;
     text-decoration: none;
-    transition: background-color 0.3s;
+    letter-spacing: 0.5px;
+    transition: color 0.2s, background 0.2s;
+    border-right: 0.5px solid #2a2a2a;
 }
 
-ul li a:hover {
-    background-color: darkred;
+.gdp-nav-links li a:hover {
+    color: #f0ece4;
+    background: #242424;
+}
+
+.gdp-nav-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.gdp-btn-ghost {
+    padding: 7px 18px;
+    background: transparent;
+    border: 0.5px solid #555;
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.gdp-btn-ghost:hover {
+    border-color: #c0392b;
+    color: #f0ece4;
+}
+
+.gdp-btn-primary {
+    padding: 7px 18px;
+    background: #c0392b;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.gdp-btn-primary:hover {
+    background: #a93226;
+}
+
+.gdp-hero {
+    position: relative;
+    padding: 72px 2rem 64px;
+    border-bottom: 1px solid #1e1e1e;
+    overflow: hidden;
+}
+
+.gdp-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, #1a1a1a 0px, #1a1a1a 1px, transparent 1px, transparent 48px), repeating-linear-gradient(0deg, #1a1a1a 0px, #1a1a1a 1px, transparent 1px, transparent 48px);
+    opacity: 0.35;
+}
+
+.gdp-hero-accent {
+    position: absolute;
+    top: -40px;
+    right: -60px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(192, 57, 43, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.gdp-hero-inner {
+    position: relative;
+    max-width: 680px;
+}
+
+.gdp-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(192, 57, 43, 0.15);
+    border: 0.5px solid rgba(192, 57, 43, 0.4);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: #e07060;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.gdp-hero-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #c0392b;
+    border-radius: 50%;
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.gdp-hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    line-height: 1.05;
+    letter-spacing: 2px;
+    color: #f0ece4;
+    margin-bottom: 16px;
+}
+
+.gdp-hero h1 span {
+    color: #c0392b;
+}
+
+.gdp-hero p {
+    font-size: 15px;
+    color: #888;
+    line-height: 1.7;
+    max-width: 500px;
+    margin-bottom: 28px;
+}
+
+.gdp-hero-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gdp-stats-bar {
+    display: flex;
+    border-bottom: 1px solid #1e1e1e;
+    background: #141414;
+}
+
+.gdp-stat {
+    flex: 1;
+    padding: 18px 24px;
+    border-right: 0.5px solid #1e1e1e;
+}
+
+.gdp-stat:last-child {
+    border-right: none;
+}
+
+.gdp-stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: #c0392b;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+.gdp-stat-label {
+    font-size: 11px;
+    color: #666;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.gdp-modules {
+    padding: 48px 2rem;
+    border-bottom: 1px solid #1e1e1e;
+}
+
+.gdp-section-label {
+    font-size: 11px;
+    color: #c0392b;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.gdp-section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 1.5px;
+    color: #f0ece4;
+    margin-bottom: 32px;
+}
+
+.gdp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: #1e1e1e;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.gdp-module-card {
+    background: #141414;
+    padding: 24px 20px;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.gdp-module-card:hover {
+    background: #1a1a1a;
+}
+
+.gdp-module-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(192, 57, 43, 0.12);
+    border: 0.5px solid rgba(192, 57, 43, 0.25);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 18px;
+    color: #c0392b;
+}
+
+.gdp-module-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e8e0d4;
+    margin-bottom: 6px;
+}
+
+.gdp-module-desc {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.gdp-alert-strip {
+    margin: 0 2rem 0;
+    background: rgba(192, 57, 43, 0.08);
+    border: 0.5px solid rgba(192, 57, 43, 0.25);
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+}
+
+.gdp-alert-dot {
+    width: 8px;
+    height: 8px;
+    background: #c0392b;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 1.8s infinite;
+}
+
+.gdp-alert-text {
+    font-size: 13px;
+    color: #e07060;
+}
+
+.gdp-alert-text strong {
+    color: #f0ece4;
+    font-weight: 500;
+}
+
+.gdp-alert-time {
+    margin-left: auto;
+    font-size: 11px;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.gdp-footer {
+    padding: 24px 2rem;
+    border-top: 1px solid #1e1e1e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gdp-footer-text {
+    font-size: 12px;
+    color: #444;
+}
+
+.gdp-footer-links {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+}
+
+.gdp-footer-links li a {
+    font-size: 12px;
+    color: #444;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.gdp-footer-links li a:hover {
+    color: #888;
 }
