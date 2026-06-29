@@ -1,0 +1,80 @@
+<!-- app/templates/admin/new_user.html -->
+{% extends "base.html" %}
+
+{% block title %}Нов потребител | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад към потребителите
+    </a>
+
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 10px;">Нов потребител</h1>
+    <p style="color: var(--text-muted); margin-bottom: 30px;">Създайте нов потребител в системата</p>
+
+    <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; max-width: 600px;">
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="margin-bottom: 15px;">
+                    <label for="first_name" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Име *</label>
+                    <input type="text" id="first_name" name="first_name" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="last_name" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Фамилия *</label>
+                    <input type="text" id="last_name" name="last_name" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="username" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Потребителско име *</label>
+                <input type="text" id="username" name="username" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="email" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Имейл *</label>
+                <input type="email" id="email" name="email" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="phone" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Телефон</label>
+                <input type="tel" id="phone" name="phone" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="margin-bottom: 15px;">
+                    <label for="password" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Парола *</label>
+                    <input type="password" id="password" name="password" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="role" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Роля *</label>
+                    <select id="role" name="role" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                        <option value="firefighter">Пожарникар</option>
+                        <option value="team_leader">Ръководител на екип</option>
+                        <option value="dispatcher">Диспечер</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="team_id" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Екип</label>
+                <select id="team_id" name="team_id" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    <option value="">Няма</option>
+                    {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px;">
+                    <i class="fas fa-user-plus"></i> Създай потребител
+                </button>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary" style="flex: 1; justify-content: center; padding: 12px;">
+                    Отказ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

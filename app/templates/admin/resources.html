@@ -1,0 +1,109 @@
+<!-- app/templates/admin/resources.html -->
+{% extends "base.html" %}
+
+{% block title %}Ресурси | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px;">Управление на ресурси</h1>
+        <button onclick="showNewResourceModal()" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Нов ресурс
+        </button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+        {% for resource in resources %}
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h3 style="color: var(--text-light);">{{ resource.name }}</h3>
+                    <p style="color: var(--text-muted); font-size: 13px;">Тип: {{ resource.type or 'Неопределен' }}</p>
+                </div>
+                <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px;
+                    {% if resource.available > 0 %}background: #2ecc71; color: #fff;
+                    {% else %}background: #e74c3c; color: #fff;{% endif %}">
+                    {{ resource.available }}/{{ resource.quantity }}
+                </span>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                {% if resource.water_capacity %}
+                <p style="color: var(--text-muted); font-size: 12px;">
+                    <i class="fas fa-tint"></i> Воден капацитет: {{ resource.water_capacity }}L
+                </p>
+                <p style="color: var(--text-muted); font-size: 12px;">
+                    <i class="fas fa-water"></i> Текущо ниво: {{ resource.current_water or 0 }}L
+                </p>
+                {% endif %}
+
+                {% if resource.team_id %}
+                <p style="color: var(--text-muted); font-size: 12px;">
+                    <i class="fas fa-users"></i>
+                    {% for team in teams %}
+                        {% if team.id == resource.team_id %}
+                            {{ team.name }}
+                        {% endif %}
+                    {% endfor %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- New Resource Modal -->
+<div id="newResourceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 40px; max-width: 500px; width: 90%;">
+        <h2 style="margin-bottom: 20px;">Нов ресурс</h2>
+        <form method="POST" action="{{ url_for('admin.new_resource') }}">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Име на ресурс</label>
+                <input type="text" name="name" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Тип</label>
+                <input type="text" name="type" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Количество</label>
+                    <input type="number" name="quantity" value="1" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Налични</label>
+                    <input type="number" name="available" value="1" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Екип</label>
+                <select name="team_id" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    <option value="">Няма</option>
+                    {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Воден капацитет (L)</label>
+                <input type="number" name="water_capacity" step="0.01" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Създай</button>
+                <button type="button" onclick="hideNewResourceModal()" class="btn btn-secondary" style="flex: 1;">Отказ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showNewResourceModal() {
+    document.getElementById('newResourceModal').style.display = 'flex';
+}
+
+function hideNewResourceModal() {
+    document.getElementById('newResourceModal').style.display = 'none';
+}
+</script>
+{% endblock %}

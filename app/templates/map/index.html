@@ -1,0 +1,152 @@
+<!-- app/templates/map/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Оперативна карта | ГДПБЗН{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 70vh;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+    .map-legend {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .legend-dot.incident { background: #e74c3c; }
+    .legend-dot.active-team { background: #3498db; }
+    .legend-dot.available-team { background: #2ecc71; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 10px;">Оперативна карта</h1>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">Реално време - позиции на екипи и активни произшествия</p>
+
+    <div id="map"></div>
+
+    <div class="map-legend">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+            <div class="legend-item">
+                <span class="legend-dot incident"></span>
+                <span>Активно произшествие</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot active-team"></span>
+                <span>Изпратен екип</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot available-team"></span>
+                <span>Свободен екип</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map centered on Bulgaria
+    const map = L.map('map').setView([42.7, 25.5], 7);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Fetch and display data
+    fetch('/map/api/data')
+        .then(response => response.json())
+        .then(data => {
+            // Add incident markers
+            data.incidents.forEach(incident => {
+                if (incident.latitude && incident.longitude) {
+                    const marker = L.marker([incident.latitude, incident.longitude], {
+                        icon: L.divIcon({
+                            html: `<i class="fas fa-fire" style="color: #e74c3c; font-size: 24px;"></i>`,
+                            className: 'custom-div-icon',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="min-width: 200px;">
+                            <strong>${incident.incident_number}</strong><br>
+                            <span>Тип: ${incident.type}</span><br>
+                            <span>Статус: ${incident.status}</span><br>
+                            <span>${incident.address}</span><br>
+                            <a href="/incidents/${incident.id}" style="color: #e74c3c;">Преглед</a>
+                        </div>
+                    `);
+                }
+            });
+
+            // Add active team markers
+            data.active_teams.forEach(team => {
+                if (team.latitude && team.longitude) {
+                    const marker = L.marker([team.latitude, team.longitude], {
+                        icon: L.divIcon({
+                            html: `<i class="fas fa-truck" style="color: #3498db; font-size: 24px;"></i>`,
+                            className: 'custom-div-icon',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="min-width: 200px;">
+                            <strong>${team.name}</strong><br>
+                            <span>Статус: ${team.status}</span><br>
+                            ${team.current_incident_id ? `<a href="/incidents/${team.current_incident_id}" style="color: #3498db;">Към произшествие</a>` : ''}
+                        </div>
+                    `);
+                }
+            });
+
+            // Add available team markers
+            data.available_teams.forEach(team => {
+                if (team.latitude && team.longitude) {
+                    const marker = L.marker([team.latitude, team.longitude], {
+                        icon: L.divIcon({
+                            html: `<i class="fas fa-truck" style="color: #2ecc71; font-size: 20px;"></i>`,
+                            className: 'custom-div-icon',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="min-width: 200px;">
+                            <strong>${team.name}</strong><br>
+                            <span style="color: #2ecc71;">Свободен</span><br>
+                            ${team.station ? `Станция: ${team.station}` : ''}
+                        </div>
+                    `);
+                }
+            });
+        })
+        .catch(error => console.error('Error loading map data:', error));
+});
+</script>
+{% endblock %}

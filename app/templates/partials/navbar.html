@@ -1,0 +1,39 @@
+<!-- app/templates/partials/navbar.html -->
+<nav class="navbar">
+    <a href="{{ url_for('main.index') }}" class="navbar-brand">
+        <span class="brand-icon">🔥</span>
+        <div>
+            <div class="brand-text">ГДПБЗН</div>
+            <div class="brand-sub">МВР България</div>
+        </div>
+    </a>
+
+    <ul class="navbar-links">
+        <li><a href="{{ url_for('main.index') }}" class="{% if request.endpoint == 'main.index' %}active{% endif %}">Начало</a></li>
+        <li><a href="{{ url_for('incidents.dashboard') }}" class="{% if request.endpoint.startswith('incidents.') %}active{% endif %}">Произшествия</a></li>
+        <li><a href="{{ url_for('teams.index') }}" class="{% if request.endpoint.startswith('teams.') %}active{% endif %}">Екипи</a></li>
+        <li><a href="{{ url_for('map.index') }}" class="{% if request.endpoint.startswith('map.') %}active{% endif %}">Карта</a></li>
+        <li><a href="{{ url_for('communication.index') }}" class="{% if request.endpoint.startswith('communication.') %}active{% endif %}">Комуникация</a></li>
+        {% if session.get('user_role') == 'admin' %}
+        <li><a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint.startswith('admin.') %}active{% endif %}">Админ</a></li>
+        {% endif %}
+    </ul>
+
+    <div class="navbar-actions">
+        {% if session.get('user_id') %}
+            <span style="color: var(--text-muted); font-size: 13px;">
+                <i class="fas fa-user"></i> {{ session.get('user_name', '') }}
+            </span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">
+                <i class="fas fa-sign-out-alt"></i> Изход
+            </a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Вход</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Регистрация</a>
+        {% endif %}
+    </div>
+
+    <button class="menu-toggle">
+        <i class="fas fa-bars"></i>
+    </button>
+</nav>

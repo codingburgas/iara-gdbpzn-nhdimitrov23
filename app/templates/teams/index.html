@@ -1,0 +1,49 @@
+<!-- app/templates/teams/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Екипи | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px;">Управление на екипи</h1>
+        <a href="{{ url_for('teams.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Нов екип
+        </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+        {% for team in teams %}
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h3 style="color: var(--text-light);">{{ team.name }}</h3>
+                    <p style="color: var(--text-muted); font-size: 13px;">Код: {{ team.code }}</p>
+                    <p style="color: var(--text-muted); font-size: 13px;">{{ team.station or 'Няма станция' }}</p>
+                </div>
+                <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px;
+                    {% if team.status == 'available' %}background: #2ecc71; color: #fff;
+                    {% elif team.status == 'dispatched' %}background: #3498db; color: #fff;
+                    {% elif team.status == 'on_site' %}background: #e67e22; color: #fff;
+                    {% else %}background: var(--text-muted); color: #fff;{% endif %}">
+                    {{ team.status }}
+                </span>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <p style="color: var(--text-muted); font-size: 12px;">
+                    <i class="fas fa-car"></i> {{ team.vehicle_type or 'Няма автомобил' }}
+                </p>
+                <p style="color: var(--text-muted); font-size: 12px;">
+                    <i class="fas fa-id-card"></i> {{ team.vehicle_registration or 'Няма регистрация' }}
+                </p>
+            </div>
+
+            <a href="{{ url_for('teams.view', team_id=team.id) }}" class="btn btn-secondary" style="margin-top: 10px; width: 100%; justify-content: center;">
+                <i class="fas fa-eye"></i> Преглед
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

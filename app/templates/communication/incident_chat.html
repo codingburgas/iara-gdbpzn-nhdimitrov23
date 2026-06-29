@@ -1,0 +1,108 @@
+<!-- app/templates/communication/incident_chat.html -->
+{% extends "base.html" %}
+
+{% block title %}Чат - {{ incident.incident_number }} | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('incidents.view', incident_id=incident.id) }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад към произшествието
+    </a>
+
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px;">{{ incident.incident_number }}</h1>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">{{ incident.address }}</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 30px;">
+        <!-- Chat Area -->
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                <i class="fas fa-comments"></i> Чат
+            </h3>
+
+            <!-- Messages -->
+            <div id="chatMessages" style="max-height: 500px; overflow-y: auto; margin-bottom: 15px;">
+                {% if messages %}
+                    {% for msg in messages %}
+                    <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="color: var(--text-light); font-size: 13px;">
+                                {{ msg.user_name or 'Система' }}
+                            </strong>
+                            <span style="color: var(--text-muted); font-size: 11px;">
+                                {{ msg.created_at.strftime('%H:%M %d.%m.%Y') if msg.created_at else '' }}
+                            </span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">{{ msg.content }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 30px;">Няма съобщения</p>
+                {% endif %}
+            </div>
+
+            <!-- Send Message -->
+            <form method="POST" action="{{ url_for('communication.send_message') }}">
+                <input type="hidden" name="incident_id" value="{{ incident.id }}">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="content" required placeholder="Напишете съобщение..." style="flex: 1; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Изпрати
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Templates Sidebar -->
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                <i class="fas fa-file-alt"></i> Шаблони
+            </h3>
+
+            {% if templates %}
+                {% for template in templates %}
+                <div style="background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <strong style="color: var(--text-light); font-size: 13px;">{{ template.name }}</strong>
+                            {% if template.category %}
+                            <span style="display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 9px; background: var(--primary-red); color: #fff; margin-left: 5px;">
+                                {{ template.category }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <button onclick="insertTemplate('{{ template.content|escape }}')" class="btn btn-secondary" style="padding: 2px 10px; font-size: 11px;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 15px; font-size: 13px;">Няма шаблони</p>
+            {% endif %}
+
+            <a href="{{ url_for('communication.new_template') }}" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 10px; padding: 8px; font-size: 13px;">
+                <i class="fas fa-plus"></i> Нов шаблон
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function insertTemplate(content) {
+    // Find the message input field and insert the template
+    const input = document.querySelector('input[name="content"]');
+    if (input) {
+        input.value = content;
+        input.focus();
+    }
+}
+
+// Auto-scroll to bottom of chat
+document.addEventListener('DOMContentLoaded', function() {
+    const chatContainer = document.getElementById('chatMessages');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

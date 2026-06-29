@@ -1,0 +1,83 @@
+<!-- app/templates/incidents/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Произшествия | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px;">Управление на произшествия</h1>
+        <a href="{{ url_for('incidents.new_incident') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ново произшествие
+        </a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        <!-- Active Incidents -->
+        <div>
+            <h3 style="margin-bottom: 20px; color: var(--text-muted);">Активни произшествия</h3>
+
+            {% if active_incidents %}
+                {% for incident in active_incidents %}
+                <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4 style="color: var(--primary-red);">{{ incident.incident_number }}</h4>
+                            <p style="color: var(--text-muted);">{{ incident.address }}</p>
+                            <p style="color: var(--text-muted); font-size: 13px;">Тип: {{ incident.type }}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px;
+                                {% if incident.status == 'reported' %}background: #f39c12; color: #fff;
+                                {% elif incident.status == 'dispatched' %}background: #3498db; color: #fff;
+                                {% elif incident.status == 'on_site' %}background: #e67e22; color: #fff;
+                                {% elif incident.status == 'in_progress' %}background: #e74c3c; color: #fff;
+                                {% else %}background: var(--text-muted); color: #fff;{% endif %}">
+                                {{ incident.status }}
+                            </span>
+                            <p style="color: var(--text-muted); font-size: 12px; margin-top: 5px;">
+                                Приоритет: {{ incident.priority }}/5
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('incidents.view', incident_id=incident.id) }}" class="btn btn-secondary" style="margin-top: 10px;">
+                        <i class="fas fa-eye"></i> Преглед
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 40px; text-align: center; color: var(--text-muted);">
+                    <i class="fas fa-check-circle" style="font-size: 40px; color: var(--primary-red);"></i>
+                    <p style="margin-top: 15px;">Няма активни произшествия</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Available Teams -->
+        <div>
+            <h3 style="margin-bottom: 20px; color: var(--text-muted);">Свободни екипи</h3>
+
+            {% if available_teams %}
+                {% for team in available_teams %}
+                <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: var(--text-light);">{{ team.name }}</h4>
+                            <p style="color: var(--text-muted); font-size: 12px;">{{ team.station or 'Няма станция' }}</p>
+                        </div>
+                        <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; background: #2ecc71; color: #fff;">
+                            Свободен
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; color: var(--text-muted);">
+                    <i class="fas fa-users" style="font-size: 30px;"></i>
+                    <p style="margin-top: 10px;">Няма свободни екипи</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

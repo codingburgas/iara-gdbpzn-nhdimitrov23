@@ -1,0 +1,240 @@
+<!-- app/templates/incidents/view.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ incident.incident_number }} | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('incidents.dashboard') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад към произшествията
+    </a>
+
+    <!-- Incident Header -->
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+        <div>
+            <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px;">{{ incident.incident_number }}</h1>
+            <p style="color: var(--text-muted);">
+                <i class="fas fa-calendar"></i>
+                {{ incident.reported_at.strftime('%d.%m.%Y %H:%M') if incident.reported_at else 'Неизвестно' }}
+                &nbsp;|&nbsp;
+                <i class="fas fa-user"></i>
+                {% if incident.dispatcher_id %}
+                    Докладвано от диспечер
+                {% else %}
+                    Директен доклад
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; font-weight: 600;
+                {% if incident.status == 'reported' %}background: #f39c12; color: #fff;
+                {% elif incident.status == 'dispatched' %}background: #3498db; color: #fff;
+                {% elif incident.status == 'on_site' %}background: #e67e22; color: #fff;
+                {% elif incident.status == 'in_progress' %}background: #e74c3c; color: #fff;
+                {% elif incident.status == 'contained' %}background: #2ecc71; color: #fff;
+                {% elif incident.status == 'resolved' %}background: #27ae60; color: #fff;
+                {% elif incident.status == 'closed' %}background: #7f8c8d; color: #fff;
+                {% else %}background: var(--text-muted); color: #fff;{% endif %}">
+                {{ incident.status|title }}
+            </span>
+            <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; margin-left: 8px; background: var(--dark-card); border: 1px solid var(--border-color); color: var(--text-muted);">
+                Приоритет: {{ incident.priority }}/5
+            </span>
+        </div>
+    </div>
+
+    <!-- Incident Details -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        <div>
+            <!-- Main Info -->
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">Детайли</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 12px;">Тип</label>
+                        <p style="color: var(--text-light); font-weight: 500;">{{ incident.type|title }}</p>
+                    </div>
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 12px;">Адрес</label>
+                        <p style="color: var(--text-light);">{{ incident.address }}</p>
+                    </div>
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 12px;">GPS Координати</label>
+                        <p style="color: var(--text-light);">{{ incident.latitude }}, {{ incident.longitude }}</p>
+                    </div>
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 12px;">Докладвано от</label>
+                        <p style="color: var(--text-light);">{{ incident.reporter_name or 'Неизвестно' }}</p>
+                        {% if incident.reporter_phone %}
+                        <p style="color: var(--text-muted); font-size: 12px;">{{ incident.reporter_phone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if incident.description %}
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">Описание</h3>
+                <p style="color: var(--text-light); line-height: 1.8;">{{ incident.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Hazardous Materials -->
+            {% if incident.hazardous_materials %}
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-biohazard" style="color: #e74c3c;"></i> Опасни вещества
+                </h3>
+                <p style="color: var(--text-light); line-height: 1.8;">{{ incident.hazardous_materials }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Action Plan -->
+            {% if incident.action_plan %}
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-clipboard-list" style="color: #3498db;"></i> План за действие
+                </h3>
+                <p style="color: var(--text-light); line-height: 1.8;">{{ incident.action_plan }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Assignments -->
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-tasks"></i> Разпределени задачи
+                </h3>
+
+                {% if assignments %}
+                    {% for assignment in assignments %}
+                    <div style="background: var(--dark-bg); border-radius: 4px; padding: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--text-light);">{{ assignment.first_name }} {{ assignment.last_name }}</strong>
+                                <p style="color: var(--text-muted); font-size: 13px;">{{ assignment.task or 'Няма задача' }}</p>
+                            </div>
+                            <span style="display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px;
+                                {% if assignment.status == 'assigned' %}background: #f39c12; color: #fff;
+                                {% elif assignment.status == 'in_progress' %}background: #3498db; color: #fff;
+                                {% elif assignment.status == 'completed' %}background: #2ecc71; color: #fff;
+                                {% else %}background: var(--text-muted); color: #fff;{% endif %}">
+                                {{ assignment.status }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 15px;">Няма разпределени задачи</p>
+                {% endif %}
+            </div>
+
+            <!-- Communications -->
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-comments"></i> Комуникация
+                </h3>
+
+                <form method="POST" action="{{ url_for('incidents.add_communication', incident_id=incident.id) }}" style="margin-bottom: 15px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" name="content" required placeholder="Напишете съобщение..." style="flex: 1; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Изпрати
+                        </button>
+                    </div>
+                </form>
+
+                {% if communications %}
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        {% for msg in communications %}
+                        <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: var(--text-light); font-size: 13px;">
+                                    {{ msg.first_name }} {{ msg.last_name or 'Система' }}
+                                </strong>
+                                <span style="color: var(--text-muted); font-size: 11px;">
+                                    {{ msg.created_at.strftime('%H:%M %d.%m') if msg.created_at else '' }}
+                                </span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">{{ msg.content }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 15px;">Няма съобщения</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div>
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">Действия</h3>
+
+                <form method="POST" action="{{ url_for('incidents.update', incident_id=incident.id) }}">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Промяна на статус</label>
+                        <select name="status" style="width: 100%; padding: 8px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                            <option value="reported" {% if incident.status == 'reported' %}selected{% endif %}>Докладвано</option>
+                            <option value="dispatched" {% if incident.status == 'dispatched' %}selected{% endif %}>Изпратено</option>
+                            <option value="on_site" {% if incident.status == 'on_site' %}selected{% endif %}>На място</option>
+                            <option value="in_progress" {% if incident.status == 'in_progress' %}selected{% endif %}>В процес</option>
+                            <option value="contained" {% if incident.status == 'contained' %}selected{% endif %}>Овладяно</option>
+                            <option value="resolved" {% if incident.status == 'resolved' %}selected{% endif %}>Разрешенo</option>
+                            <option value="closed" {% if incident.status == 'closed' %}selected{% endif %}>Затворенo</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label for="update_description" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Актуализация</label>
+                        <textarea name="description" rows="3" placeholder="Добавете актуализация..." style="width: 100%; padding: 8px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;">{{ incident.description or '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-save"></i> Обнови
+                    </button>
+                </form>
+            </div>
+
+            <!-- Wind Info -->
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-wind"></i> Метео данни
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 12px;">Посока на вятъра</label>
+                        <p style="color: var(--text-light);">{{ incident.wind_direction or 'Неизвестно' }}</p>
+                    </div>
+                    <div>
+                        <label style="color: var(--text-muted); font-size: 12px;">Скорост на вятъра</label>
+                        <p style="color: var(--text-light);">{{ incident.wind_speed or 'Неизвестно' }} km/h</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timestamps -->
+            <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-clock"></i> Времеви линии
+                </h3>
+
+                <div style="color: var(--text-muted); font-size: 13px;">
+                    <p><strong>Докладвано:</strong> {{ incident.reported_at.strftime('%d.%m.%Y %H:%M') if incident.reported_at else 'Неизвестно' }}</p>
+                    {% if incident.dispatched_at %}
+                    <p><strong>Изпратено:</strong> {{ incident.dispatched_at.strftime('%d.%m.%Y %H:%M') if incident.dispatched_at else 'Неизвестно' }}</p>
+                    {% endif %}
+                    {% if incident.resolved_at %}
+                    <p><strong>Разрешенo:</strong> {{ incident.resolved_at.strftime('%d.%m.%Y %H:%M') if incident.resolved_at else 'Неизвестно' }}</p>
+                    {% endif %}
+                    {% if incident.closed_at %}
+                    <p><strong>Затворенo:</strong> {{ incident.closed_at.strftime('%d.%m.%Y %H:%M') if incident.closed_at else 'Неизвестно' }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

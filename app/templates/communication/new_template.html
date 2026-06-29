@@ -1,0 +1,51 @@
+<!-- app/templates/communication/new_template.html -->
+{% extends "base.html" %}
+
+{% block title %}Нов шаблон | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('communication.index') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад
+    </a>
+
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 10px;">Нов шаблон за съобщение</h1>
+    <p style="color: var(--text-muted); margin-bottom: 30px;">Създайте готов шаблон за бърза комуникация</p>
+
+    <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; max-width: 600px;">
+        <form method="POST">
+            <div style="margin-bottom: 20px;">
+                <label for="name" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Име на шаблона *</label>
+                <input type="text" id="name" name="name" required placeholder="Напр. Пожар - стандартен отговор" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="category" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Категория</label>
+                <select id="category" name="category" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    <option value="">Без категория</option>
+                    <option value="fire">Пожар</option>
+                    <option value="rescue">Спасителна операция</option>
+                    <option value="flood">Наводнение</option>
+                    <option value="hazmat">Опасни материали</option>
+                    <option value="dispatch">Изпращане</option>
+                    <option value="general">Общи</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="content" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Съдържание *</label>
+                <textarea id="content" name="content" required rows="6" placeholder="Текст на шаблона..." style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 14px; font-size: 16px;">
+                    <i class="fas fa-save"></i> Създай шаблон
+                </button>
+                <a href="{{ url_for('communication.index') }}" class="btn btn-secondary" style="flex: 1; justify-content: center; padding: 14px;">
+                    Отказ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

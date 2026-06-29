@@ -1,0 +1,122 @@
+<!-- app/templates/communication/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Комуникация | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 30px;">Комуникационен център</h1>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- Quick Send Message -->
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <h3 style="margin-bottom: 20px; color: var(--text-muted);">Изпрати съобщение</h3>
+            <form method="POST" action="{{ url_for('communication.send_message') }}">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Произшествие (ID)</label>
+                    <input type="number" name="incident_id" placeholder="Остави празно за общо съобщение" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Съобщение</label>
+                    <textarea name="content" required rows="4" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);"></textarea>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Шаблон</label>
+                    <select name="template_id" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);" onchange="fillTemplate(this)">
+                        <option value="">Избери шаблон</option>
+                        {% for template in templates %}
+                        <option value="{{ template.id }}" data-content="{{ template.content }}">{{ template.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Изпрати
+                </button>
+            </form>
+        </div>
+
+        <!-- Templates -->
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--text-muted);">Шаблони</h3>
+                <a href="{{ url_for('communication.new_template') }}" class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px;">
+                    <i class="fas fa-plus"></i> Нов шаблон
+                </a>
+            </div>
+
+            {% if templates %}
+                {% for template in templates %}
+                <div style="background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 15px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <strong style="color: var(--text-light);">{{ template.name }}</strong>
+                            {% if template.category %}
+                            <span style="display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; background: var(--primary-red); color: #fff; margin-left: 5px;">
+                                {{ template.category }}
+                            </span>
+                            {% endif %}
+                            <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;">{{ template.content[:100] }}{% if template.content|length > 100 %}...{% endif %}</p>
+                        </div>
+                        <button onclick="copyTemplate('{{ template.content|escape }}')" class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 20px;">Няма създадени шаблони</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Messages -->
+    <div style="margin-top: 30px; background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+        <h3 style="margin-bottom: 20px; color: var(--text-muted);">Последни съобщения</h3>
+
+        {% if recent_messages %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for msg in recent_messages %}
+                <div style="padding: 12px; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--text-light);">{{ msg.first_name }} {{ msg.last_name or 'Система' }}</strong>
+                            {% if msg.incident_id %}
+                            <span style="color: var(--text-muted); font-size: 12px;">(Произшествие #{{ msg.incident_id }})</span>
+                            {% endif %}
+                            <p style="color: var(--text-muted); margin-top: 5px;">{{ msg.content }}</p>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 11px;">
+                            {{ msg.created_at.strftime('%H:%M %d.%m.%Y') if msg.created_at else '' }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Няма съобщения</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function fillTemplate(select) {
+    const selected = select.options[select.selectedIndex];
+    const content = selected.getAttribute('data-content');
+    if (content) {
+        const textarea = document.querySelector('textarea[name="content"]');
+        textarea.value = content;
+    }
+}
+
+function copyTemplate(content) {
+    navigator.clipboard.writeText(content).then(() => {
+        alert('Шаблонът е копиран!');
+    }).catch(() => {
+        // Fallback
+        const textarea = document.querySelector('textarea[name="content"]');
+        textarea.value = content;
+        alert('Шаблонът е поставен в полето за съобщение!');
+    });
+}
+</script>
+{% endblock %}

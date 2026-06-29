@@ -1,0 +1,55 @@
+<!-- app/templates/admin/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Админ панел | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 30px;">Административен панел</h1>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center;">
+            <div style="font-size: 32px; color: var(--primary-red);">{{ total_users }}</div>
+            <div style="color: var(--text-muted); font-size: 13px;">Потребители</div>
+        </div>
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center;">
+            <div style="font-size: 32px; color: var(--primary-red);">{{ total_teams }}</div>
+            <div style="color: var(--text-muted); font-size: 13px;">Екипи</div>
+        </div>
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center;">
+            <div style="font-size: 32px; color: var(--primary-red);">{{ total_incidents }}</div>
+            <div style="color: var(--text-muted); font-size: 13px;">Общо произшествия</div>
+        </div>
+        <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center;">
+            <div style="font-size: 32px; color: var(--primary-red);">{{ active_incidents }}</div>
+            <div style="color: var(--text-muted); font-size: 13px;">Активни произшествия</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+        <a href="{{ url_for('admin.users') }}" style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; text-align: center; text-decoration: none; color: var(--text-light); transition: all 0.3s;">
+            <i class="fas fa-users" style="font-size: 40px; color: var(--primary-red); margin-bottom: 15px;"></i>
+            <h3>Потребители</h3>
+            <p style="color: var(--text-muted); font-size: 13px;">Управление на потребители</p>
+        </a>
+
+        <a href="{{ url_for('admin.resources') }}" style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; text-align: center; text-decoration: none; color: var(--text-light); transition: all 0.3s;">
+            <i class="fas fa-cubes" style="font-size: 40px; color: var(--primary-red); margin-bottom: 15px;"></i>
+            <h3>Ресурси</h3>
+            <p style="color: var(--text-muted); font-size: 13px;">Управление на ресурси</p>
+        </a>
+
+        <a href="{{ url_for('teams.index') }}" style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; text-align: center; text-decoration: none; color: var(--text-light); transition: all 0.3s;">
+            <i class="fas fa-users-cog" style="font-size: 40px; color: var(--primary-red); margin-bottom: 15px;"></i>
+            <h3>Екипи</h3>
+            <p style="color: var(--text-muted); font-size: 13px;">Управление на екипи</p>
+        </a>
+
+        <a href="{{ url_for('incidents.dashboard') }}" style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; text-align: center; text-decoration: none; color: var(--text-light); transition: all 0.3s;">
+            <i class="fas fa-fire-extinguisher" style="font-size: 40px; color: var(--primary-red); margin-bottom: 15px;"></i>
+            <h3>Произшествия</h3>
+            <p style="color: var(--text-muted); font-size: 13px;">Управление на произшествия</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

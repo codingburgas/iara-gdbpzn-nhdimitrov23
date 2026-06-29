@@ -1,0 +1,110 @@
+<!-- app/templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}ГДПБЗН - Управление на произшествия{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    Оперативна система
+                </div>
+                <h1>Управление на <span>произшествия</span> и екипи</h1>
+                <p>Единна платформа за координация на пожарогасителни и спасителни операции. Реално време, пълна видимост, ефективно управление.</p>
+                <div class="hero-buttons">
+                    <a href="{{ url_for('map.index') }}" class="btn btn-primary">
+                        <i class="fas fa-map-marked-alt"></i> Оперативна карта
+                    </a>
+                    <a href="{{ url_for('incidents.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-fire-extinguisher"></i> Произшествия
+                    </a>
+                </div>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ active_count|default(0) }}</div>
+                    <div class="stat-label">Активни произшествия</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ available_count|default(0) }}</div>
+                    <div class="stat-label">Свободни екипи</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Оперативен център</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <div class="section-header">
+            <p class="section-subtitle">Функционалности</p>
+            <h2>Основни модули на системата</h2>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>Произшествия</h3>
+                <p>Регистрация, разпределение и проследяване на всички активни и архивирани произшествия.</p>
+                <a href="{{ url_for('incidents.dashboard') }}" class="btn btn-primary">Виж повече</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Управление на екипи</h3>
+                <p>Наличност на служители, смени, отпуски и разпределение към пожарни автомобили.</p>
+                <a href="{{ url_for('teams.index') }}" class="btn btn-primary">Виж повече</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-map-2"></i>
+                </div>
+                <h3>Оперативна карта</h3>
+                <p>Реално проследяване на местоположения, фронт на огъня и пълна ситуационна картина.</p>
+                <a href="{{ url_for('map.index') }}" class="btn btn-primary">Виж повече</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>Задачи и ресурси</h3>
+                <p>Оперативни, логистични и административни задачи с отчет за изпълнение.</p>
+                <a href="{{ url_for('admin.resources') }}" class="btn btn-primary">Виж повече</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Комуникация</h3>
+                <p>Чат канали, шаблонни съобщения, споделяне на снимки и видео връзка на живо.</p>
+                <a href="{{ url_for('communication.index') }}" class="btn btn-primary">Виж повече</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3>Отчети и анализи</h3>
+                <p>Справки по произшествия, ефективност на екипи и превантивна дейност.</p>
+                <a href="#" class="btn btn-primary">Виж повече</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

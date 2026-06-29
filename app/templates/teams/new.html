@@ -1,0 +1,53 @@
+<!-- app/templates/teams/new.html -->
+{% extends "base.html" %}
+
+{% block title %}Нов екип | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('teams.index') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад към екипите
+    </a>
+
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 10px;">Нов екип</h1>
+    <p style="color: var(--text-muted); margin-bottom: 30px;">Създайте нов пожарен екип</p>
+
+    <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; max-width: 600px;">
+        <form method="POST">
+            <div style="margin-bottom: 20px;">
+                <label for="name" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Име на екипа *</label>
+                <input type="text" id="name" name="name" required placeholder="Напр. Пожарна София Център" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="code" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Код на екипа *</label>
+                <input type="text" id="code" name="code" required placeholder="Напр. FD001" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="station" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Станция</label>
+                <input type="text" id="station" name="station" placeholder="Напр. София, ул. Опълченска 1" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="vehicle_type" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Тип автомобил</label>
+                <input type="text" id="vehicle_type" name="vehicle_type" placeholder="Напр. Пожарен автомобил" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="vehicle_registration" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Регистрационен номер</label>
+                <input type="text" id="vehicle_registration" name="vehicle_registration" placeholder="Напр. СА 1234 АА" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 14px; font-size: 16px;">
+                    <i class="fas fa-save"></i> Създай екип
+                </button>
+                <a href="{{ url_for('teams.index') }}" class="btn btn-secondary" style="flex: 1; justify-content: center; padding: 14px;">
+                    Отказ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
