@@ -30,14 +30,10 @@ def new_incident():
     """Create a new incident"""
     if request.method == 'POST':
         try:
-            # Create incident object
             incident = Incident()
-
-            # Set all fields
             incident.type = request.form.get('type')
             incident.address = request.form.get('address')
 
-            # Handle coordinates
             lat = request.form.get('latitude')
             lng = request.form.get('longitude')
 
@@ -57,14 +53,12 @@ def new_incident():
             incident.dispatcher_id = current_user.id
             incident.status = 'reported'
 
-            # Save and get ID
             incident_id = incident.save()
 
             if not incident_id:
                 flash('Грешка при създаване на произшествие', 'danger')
                 return render_template('incidents/new.html', teams=Team.get_all())
 
-            # Handle team assignments
             team_ids = request.form.getlist('team_ids')
             if team_ids:
                 conn = db.get_connection()
@@ -72,7 +66,6 @@ def new_incident():
                     with conn.cursor() as cur:
                         for team_id in team_ids:
                             team_id_int = int(team_id)
-                            # Update team status
                             cur.execute('''
                                         UPDATE teams
                                         SET status              = 'dispatched',
@@ -81,7 +74,6 @@ def new_incident():
                                         WHERE id = %s
                                         ''', (incident_id, team_id_int))
 
-                            # Find a user in this team
                             cur.execute('SELECT id FROM users WHERE team_id = %s LIMIT 1', (team_id_int,))
                             user = cur.fetchone()
                             if user:
@@ -105,7 +97,6 @@ def new_incident():
             flash(f'Грешка при създаване на произшествие: {str(e)}', 'danger')
             return render_template('incidents/new.html', teams=Team.get_all())
 
-    # GET request - show form
     teams = Team.get_all()
     return render_template('incidents/new.html', teams=teams)
 
@@ -128,24 +119,58 @@ def view(incident_id):
                            communications=communications)
 
 
-@incidents_bp.route('/<int:incident_id>/update', methods=['POST'])
+@incidents_bp.route('/<int:incident_id>/update-status', methods=['POST'])
 @login_required
-def update(incident_id):
-    """Update incident details"""
+def update_status(incident_id):
+    """Update incident status only"""
     incident = Incident.get_by_id(incident_id)
     if not incident:
         flash('Произшествие не е намерено', 'danger')
         return redirect(url_for('incidents.dashboard'))
 
     try:
-        if request.form.get('status'):
-            new_status = request.form.get('status')
+        old_status = incident.status
+        new_status = request.form.get('status')
+
+        if new_status:
             incident.status = new_status
 
             if new_status == 'resolved':
                 incident.resolved_at = datetime.utcnow()
+                # Clean up assigned teams
+                conn = db.get_connection()
+                with conn.cursor() as cur:
+                    cur.execute('''
+                                UPDATE teams
+                                SET status              = 'available',
+                                    current_incident_id = NULL,
+                                    updated_at          = CURRENT_TIMESTAMP
+                                WHERE current_incident_id = %s
+                                ''', (incident.id,))
+
+                    cur.execute('''
+                                UPDATE incident_assignments
+                                SET status       = 'completed',
+                                    completed_at = CURRENT_TIMESTAMP
+                                WHERE incident_id = %s
+                                  AND status != 'completed'
+                                ''', (incident.id,))
+
+                    db.commit()
+
             elif new_status == 'closed':
                 incident.closed_at = datetime.utcnow()
+                conn = db.get_connection()
+                with conn.cursor() as cur:
+                    cur.execute('''
+                                UPDATE teams
+                                SET status              = 'available',
+                                    current_incident_id = NULL,
+                                    updated_at          = CURRENT_TIMESTAMP
+                                WHERE current_incident_id = %s
+                                ''', (incident.id,))
+                    db.commit()
+
             elif new_status in ['dispatched', 'on_site', 'in_progress']:
                 if not incident.dispatched_at:
                     incident.dispatched_at = datetime.utcnow()
@@ -157,11 +182,30 @@ def update(incident_id):
             incident.action_plan = request.form.get('action_plan')
 
         incident.save()
-        flash('Произшествието е обновено', 'success')
+
+        status_messages = {
+            'resolved': 'Произшествието е разрешено и екипите са освободени!',
+            'closed': 'Произшествието е затворено и екипите са освободени!',
+            'contained': 'Пожарът е овладян!',
+            'dispatched': 'Екипите са изпратени!',
+            'on_site': 'Екипите са на място!',
+            'in_progress': 'Работата продължава!',
+        }
+
+        flash(status_messages.get(new_status, 'Произшествието е обновено'), 'success')
+
     except Exception as e:
+        db.rollback()
         flash(f'Грешка при обновяване: {str(e)}', 'danger')
 
     return redirect(url_for('incidents.view', incident_id=incident_id))
+
+
+@incidents_bp.route('/<int:incident_id>/update', methods=['POST'])
+@login_required
+def update_incident(incident_id):
+    """Update incident details (legacy - redirects to update_status)"""
+    return update_status(incident_id)
 
 
 @incidents_bp.route('/api/list')
@@ -179,7 +223,6 @@ def api_list():
 
         incidents = cur.fetchall()
 
-        # Get dispatcher names
         for inc in incidents:
             if inc.get('dispatcher_id'):
                 cur.execute('SELECT first_name, last_name FROM users WHERE id = %s', (inc['dispatcher_id'],))
@@ -217,7 +260,7 @@ def add_communication(incident_id):
 
     try:
         comm = Communication()
-        comm.incident_id = incident.id  # This now works with the property
+        comm.incident_id = incident.id
         comm.user_id = current_user.id
         comm.content = content
         comm.message_type = 'text'
@@ -225,9 +268,10 @@ def add_communication(incident_id):
         comm.save()
         flash('Съобщението е изпратено', 'success')
     except Exception as e:
+        print(f"Error sending communication: {e}")
         flash(f'Грешка при изпращане: {str(e)}', 'danger')
 
-    return redirect(url_for('incidents.view', incident_id=incident_id))
+    return redirect(url_for('incidents.view', incident_id=incident.id))
 
 
 @incidents_bp.route('/<int:incident_id>/assign-team', methods=['POST'])
@@ -252,7 +296,6 @@ def assign_team(incident_id):
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
-            # Update team status
             cur.execute('''
                         UPDATE teams
                         SET status              = 'dispatched',
@@ -261,7 +304,6 @@ def assign_team(incident_id):
                         WHERE id = %s
                         ''', (incident.id, team.id))
 
-            # Create assignment for team leader
             cur.execute("SELECT id FROM users WHERE team_id = %s AND role IN ('team_leader', 'admin') LIMIT 1",
                         (team.id,))
             user = cur.fetchone()

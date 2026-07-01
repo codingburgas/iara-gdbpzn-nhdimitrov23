@@ -177,7 +177,7 @@ def new_resource():
         with conn.cursor() as cur:
             cur.execute('''
                         INSERT INTO resources (name, type, quantity, available, team_id, water_capacity, current_water)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
                         ''', (
                             request.form.get('name'),
                             request.form.get('type'),
@@ -186,12 +186,15 @@ def new_resource():
                             int(request.form.get('team_id')) if request.form.get('team_id') else None,
                             float(request.form.get('water_capacity', 0)) if request.form.get(
                                 'water_capacity') else None,
-                            float(request.form.get('current_water', 0)) if request.form.get('current_water') else None
+                            float(request.form.get('water_capacity', 0)) if request.form.get('water_capacity') else None
+                        # Set current_water same as capacity
                         ))
+            resource_id = cur.fetchone()[0]
             db.commit()
 
         flash('Ресурсът е създаден успешно', 'success')
     except Exception as e:
+        db.rollback()
         flash(f'Грешка при създаване на ресурс: {str(e)}', 'danger')
 
     return redirect(url_for('admin.resources'))

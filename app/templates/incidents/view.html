@@ -5,12 +5,20 @@
 
 {% block content %}
 <div class="container" style="padding: 40px 0;">
-    <a href="{{ url_for('incidents.dashboard') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
-        <i class="fas fa-arrow-left"></i> Назад към произшествията
-    </a>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+        <a href="{{ url_for('incidents.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Назад към произшествията
+        </a>
+        <a href="{{ url_for('incidents.map_view', incident_id=incident.id) }}" class="btn btn-primary">
+            <i class="fas fa-map-marked-alt"></i> Виж на картата
+        </a>
+        <a href="{{ url_for('communication.incident_chat', incident_id=incident.id) }}" class="btn btn-secondary">
+            <i class="fas fa-comments"></i> Чат
+        </a>
+    </div>
 
     <!-- Incident Header -->
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <div>
             <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px;">{{ incident.incident_number }}</h1>
             <p style="color: var(--text-muted);">
@@ -25,7 +33,7 @@
                 {% endif %}
             </p>
         </div>
-        <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; font-weight: 600;
                 {% if incident.status == 'reported' %}background: #f39c12; color: #fff;
                 {% elif incident.status == 'dispatched' %}background: #3498db; color: #fff;
@@ -37,7 +45,7 @@
                 {% else %}background: var(--text-muted); color: #fff;{% endif %}">
                 {{ incident.status|title }}
             </span>
-            <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; margin-left: 8px; background: var(--dark-card); border: 1px solid var(--border-color); color: var(--text-muted);">
+            <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; background: var(--dark-card); border: 1px solid var(--border-color); color: var(--text-muted);">
                 Приоритет: {{ incident.priority }}/5
             </span>
         </div>
@@ -128,6 +136,24 @@
                 {% else %}
                     <p style="color: var(--text-muted); text-align: center; padding: 15px;">Няма разпределени задачи</p>
                 {% endif %}
+
+                <!-- Assign Team Form -->
+                {% if incident.status not in ['resolved', 'closed'] %}
+                <form method="POST" action="{{ url_for('incidents.assign_team', incident_id=incident.id) }}" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div style="display: flex; gap: 10px;">
+                        <select name="team_id" style="flex: 1; padding: 8px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                            <option value="">Избери екип</option>
+                            {% for team in teams %}
+                                <option value="{{ team.id }}">{{ team.name }} ({{ team.status }})</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Добави
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
             </div>
 
             <!-- Communications -->
@@ -137,6 +163,7 @@
                 </h3>
 
                 <form method="POST" action="{{ url_for('incidents.add_communication', incident_id=incident.id) }}" style="margin-bottom: 15px;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div style="display: flex; gap: 10px;">
                         <input type="text" name="content" required placeholder="Напишете съобщение..." style="flex: 1; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
                         <button type="submit" class="btn btn-primary">
@@ -151,13 +178,24 @@
                         <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <strong style="color: var(--text-light); font-size: 13px;">
-                                    {{ msg.first_name }} {{ msg.last_name or 'Система' }}
+                                    {% if msg.first_name %}
+                                        {{ msg.first_name }} {{ msg.last_name }}
+                                    {% else %}
+                                        Система
+                                    {% endif %}
                                 </strong>
                                 <span style="color: var(--text-muted); font-size: 11px;">
                                     {{ msg.created_at.strftime('%H:%M %d.%m') if msg.created_at else '' }}
                                 </span>
                             </div>
                             <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">{{ msg.content }}</p>
+                            {% if msg.media_url %}
+                            <div style="margin-top: 5px;">
+                                <a href="{{ msg.media_url }}" target="_blank" style="color: var(--primary-red); font-size: 12px;">
+                                    <i class="fas fa-paperclip"></i> Прикачен файл
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -172,7 +210,9 @@
             <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                 <h3 style="color: var(--text-muted); margin-bottom: 15px; font-size: 16px;">Действия</h3>
 
-                <form method="POST" action="{{ url_for('incidents.update', incident_id=incident.id) }}">
+                <form method="POST" action="{{ url_for('incidents.update_status', incident_id=incident.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Промяна на статус</label>
                         <select name="status" style="width: 100%; padding: 8px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
@@ -184,6 +224,9 @@
                             <option value="resolved" {% if incident.status == 'resolved' %}selected{% endif %}>Разрешенo</option>
                             <option value="closed" {% if incident.status == 'closed' %}selected{% endif %}>Затворенo</option>
                         </select>
+                        <p style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">
+                            <span style="color: #27ae60;">✓ Разрешенo</span> - премахва от картата и освобождава екипите
+                        </p>
                     </div>
 
                     <div style="margin-bottom: 15px;">
@@ -231,6 +274,9 @@
                     {% endif %}
                     {% if incident.closed_at %}
                     <p><strong>Затворенo:</strong> {{ incident.closed_at.strftime('%d.%m.%Y %H:%M') if incident.closed_at else 'Неизвестно' }}</p>
+                    {% endif %}
+                    {% if incident.updated_at %}
+                    <p><strong>Последна промяна:</strong> {{ incident.updated_at.strftime('%d.%m.%Y %H:%M') if incident.updated_at else 'Неизвестно' }}</p>
                     {% endif %}
                 </div>
             </div>

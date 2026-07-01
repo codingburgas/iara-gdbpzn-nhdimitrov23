@@ -29,11 +29,12 @@ if missing_vars:
 
 # Initialize extensions
 login_manager = LoginManager()
-socketio = SocketIO()
+socketio = SocketIO(cors_allowed_origins="*")
 csrf = CSRFProtect()
 
 
 def create_app():
+    """Application factory function"""
     app = Flask(__name__,
                 static_folder='static',
                 template_folder='templates')
@@ -44,34 +45,30 @@ def create_app():
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
     app.config['WTF_CSRF_ENABLED'] = True
-    app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
+    # Initialize extensions with app
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
 
-    # Initialize SocketIO with proper async mode
-    # Try eventlet first, fallback to threading
+    # Initialize SocketIO with app
     try:
-        import eventlet
-        socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
-    except ImportError:
-        try:
-            import gevent
-            socketio.init_app(app, cors_allowed_origins="*", async_mode='gevent')
-        except ImportError:
-            socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+        socketio.init_app(app)
+    except Exception as e:
+        print(f"⚠️ SocketIO initialization warning: {e}")
 
     csrf.init_app(app)
     CORS(app, supports_credentials=True)
 
+    # Import models for user loader
     from app.models import User
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.get_by_id(int(user_id))
 
+    # Import and register blueprints
     from app.routes.auth import auth_bp
     from app.routes.incidents import incidents_bp
     from app.routes.teams import teams_bp
@@ -90,6 +87,7 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
 
+    # Setup logging
     if not app.debug:
         if not os.path.exists('logs'):
             os.mkdir('logs')
@@ -103,3 +101,7 @@ def create_app():
         app.logger.info('GDPBZN application started')
 
     return app
+
+
+# Make sure create_app is exported
+__all__ = ['create_app', 'socketio', 'login_manager', 'csrf']

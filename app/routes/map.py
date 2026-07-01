@@ -22,11 +22,16 @@ def api_data():
     """Get map data with all active units and incidents"""
     conn = db.get_connection()
 
-    # Active incidents
-    active_incidents = Incident.get_active()
-
-    # Active teams - using proper cursor
+    # Active incidents - exclude resolved and closed
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+                    SELECT *
+                    FROM incidents
+                    WHERE status NOT IN ('resolved', 'closed')
+                    ORDER BY priority DESC, reported_at DESC
+                    """)
+        active_incidents = cur.fetchall()
+
         cur.execute("SELECT * FROM teams WHERE status IN ('dispatched', 'on_site')")
         active_teams = cur.fetchall()
 
@@ -35,16 +40,16 @@ def api_data():
 
     return jsonify({
         'incidents': [{
-            'id': i.id,
-            'incident_number': i.incident_number,
-            'type': i.type,
-            'status': i.status,
-            'address': i.address,
-            'latitude': float(i.latitude) if i.latitude else None,
-            'longitude': float(i.longitude) if i.longitude else None,
-            'priority': i.priority,
-            'fire_front': i.fire_front,
-            'reported_at': i.reported_at.isoformat() if i.reported_at else None
+            'id': i['id'],
+            'incident_number': i['incident_number'],
+            'type': i['type'],
+            'status': i['status'],
+            'address': i['address'],
+            'latitude': float(i['latitude']) if i['latitude'] else None,
+            'longitude': float(i['longitude']) if i['longitude'] else None,
+            'priority': i['priority'],
+            'fire_front': i['fire_front'],
+            'reported_at': i['reported_at'].isoformat() if i['reported_at'] else None
         } for i in active_incidents],
         'active_teams': [{
             'id': t['id'],

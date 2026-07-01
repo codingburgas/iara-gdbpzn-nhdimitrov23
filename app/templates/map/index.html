@@ -10,6 +10,7 @@
         height: 70vh;
         border-radius: 8px;
         border: 1px solid var(--border-color);
+        z-index: 1;
     }
     .map-legend {
         background: var(--dark-card);
@@ -35,16 +36,133 @@
     .legend-dot.incident { background: #e74c3c; }
     .legend-dot.active-team { background: #3498db; }
     .legend-dot.available-team { background: #2ecc71; }
+    .legend-dot.resolved { background: #27ae60; }
+
+    .map-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    .map-controls .btn {
+        font-size: 12px;
+        padding: 6px 14px;
+    }
+    .custom-div-icon {
+        background: transparent;
+        border: none;
+    }
+    .leaflet-popup-content {
+        min-width: 200px;
+        color: #333;
+    }
+    .leaflet-popup-content strong {
+        color: #c0392b;
+    }
+    .leaflet-popup-content .status-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+    .status-badge.reported { background: #f39c12; color: #fff; }
+    .status-badge.dispatched { background: #3498db; color: #fff; }
+    .status-badge.on_site { background: #e67e22; color: #fff; }
+    .status-badge.in_progress { background: #e74c3c; color: #fff; }
+    .status-badge.contained { background: #2ecc71; color: #fff; }
+
+    .map-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .map-stat {
+        background: var(--dark-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 10px;
+        text-align: center;
+    }
+    .map-stat .number {
+        font-size: 24px;
+        font-weight: bold;
+        font-family: 'Bebas Neue', sans-serif;
+    }
+    .map-stat .label {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    .map-stat.incidents .number { color: #e74c3c; }
+    .map-stat.active-teams .number { color: #3498db; }
+    .map-stat.available-teams .number { color: #2ecc71; }
+
+    @media (max-width: 768px) {
+        #map {
+            height: 50vh;
+        }
+        .map-controls {
+            justify-content: center;
+        }
+        .map-stats {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container" style="padding: 40px 0;">
-    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 10px;">Оперативна карта</h1>
-    <p style="color: var(--text-muted); margin-bottom: 20px;">Реално време - позиции на екипи и активни произшествия</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;">
+        <div>
+            <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 5px;">Оперативна карта</h1>
+            <p style="color: var(--text-muted);">Реално време - позиции на екипи и активни произшествия</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="refreshMap()" class="btn btn-secondary" style="padding: 8px 16px;">
+                <i class="fas fa-sync-alt"></i> Обнови
+            </button>
+            <a href="{{ url_for('incidents.new_incident') }}" class="btn btn-primary" style="padding: 8px 16px;">
+                <i class="fas fa-plus"></i> Ново произшествие
+            </a>
+        </div>
+    </div>
 
+    <!-- Map Controls -->
+    <div class="map-controls">
+        <button onclick="zoomToIncidents()" class="btn btn-secondary">
+            <i class="fas fa-fire"></i> Към произшествия
+        </button>
+        <button onclick="zoomToTeams()" class="btn btn-secondary">
+            <i class="fas fa-truck"></i> Към екипи
+        </button>
+        <button onclick="resetMapView()" class="btn btn-secondary">
+            <i class="fas fa-home"></i> Начален изглед
+        </button>
+    </div>
+
+    <!-- Map -->
     <div id="map"></div>
 
+    <!-- Stats -->
+    <div class="map-stats" id="mapStats">
+        <div class="map-stat incidents">
+            <div class="number" id="incidentCount">0</div>
+            <div class="label">Активни произшествия</div>
+        </div>
+        <div class="map-stat active-teams">
+            <div class="number" id="activeTeamCount">0</div>
+            <div class="label">Активни екипи</div>
+        </div>
+        <div class="map-stat available-teams">
+            <div class="number" id="availableTeamCount">0</div>
+            <div class="label">Свободни екипи</div>
+        </div>
+    </div>
+
+    <!-- Legend -->
     <div class="map-legend">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
             <div class="legend-item">
@@ -59,94 +177,271 @@
                 <span class="legend-dot available-team"></span>
                 <span>Свободен екип</span>
             </div>
+            <div class="legend-item">
+                <span style="color: #27ae60; font-size: 18px;">✓</span>
+                <span style="color: #27ae60;">Разрешено произшествие</span>
+            </div>
+        </div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-align: center;">
+            <i class="fas fa-info-circle"></i>
+            Кликнете върху маркер за повече информация |
+            Автоматично обновяване на всеки 30 секунди
         </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+let map;
+let incidentMarkers = [];
+let teamMarkers = [];
+let refreshInterval;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize map centered on Bulgaria
-    const map = L.map('map').setView([42.7, 25.5], 7);
+    map = L.map('map').setView([42.7, 25.5], 7);
 
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
     }).addTo(map);
 
-    // Fetch and display data
-    fetch('/map/api/data')
-        .then(response => response.json())
-        .then(data => {
-            // Add incident markers
-            data.incidents.forEach(incident => {
-                if (incident.latitude && incident.longitude) {
-                    const marker = L.marker([incident.latitude, incident.longitude], {
-                        icon: L.divIcon({
-                            html: `<i class="fas fa-fire" style="color: #e74c3c; font-size: 24px;"></i>`,
-                            className: 'custom-div-icon',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        })
-                    }).addTo(map);
+    // Load initial data
+    loadMapData();
 
-                    marker.bindPopup(`
-                        <div style="min-width: 200px;">
-                            <strong>${incident.incident_number}</strong><br>
-                            <span>Тип: ${incident.type}</span><br>
-                            <span>Статус: ${incident.status}</span><br>
-                            <span>${incident.address}</span><br>
-                            <a href="/incidents/${incident.id}" style="color: #e74c3c;">Преглед</a>
-                        </div>
-                    `);
+    // Auto-refresh every 30 seconds
+    refreshInterval = setInterval(loadMapData, 30000);
+});
+
+function loadMapData() {
+    fetch('/map/api/data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Clear existing markers
+            clearMarkers();
+
+            // Update stats
+            updateStats(data);
+
+            // Filter incidents - only show active ones (not resolved or closed)
+            const activeIncidents = data.incidents.filter(incident =>
+                !['resolved', 'closed'].includes(incident.status)
+            );
+
+            // Add incident markers
+            activeIncidents.forEach(incident => {
+                if (incident.latitude && incident.longitude) {
+                    addIncidentMarker(incident);
                 }
             });
 
             // Add active team markers
             data.active_teams.forEach(team => {
                 if (team.latitude && team.longitude) {
-                    const marker = L.marker([team.latitude, team.longitude], {
-                        icon: L.divIcon({
-                            html: `<i class="fas fa-truck" style="color: #3498db; font-size: 24px;"></i>`,
-                            className: 'custom-div-icon',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        })
-                    }).addTo(map);
-
-                    marker.bindPopup(`
-                        <div style="min-width: 200px;">
-                            <strong>${team.name}</strong><br>
-                            <span>Статус: ${team.status}</span><br>
-                            ${team.current_incident_id ? `<a href="/incidents/${team.current_incident_id}" style="color: #3498db;">Към произшествие</a>` : ''}
-                        </div>
-                    `);
+                    addTeamMarker(team, 'active');
                 }
             });
 
             // Add available team markers
             data.available_teams.forEach(team => {
                 if (team.latitude && team.longitude) {
-                    const marker = L.marker([team.latitude, team.longitude], {
-                        icon: L.divIcon({
-                            html: `<i class="fas fa-truck" style="color: #2ecc71; font-size: 20px;"></i>`,
-                            className: 'custom-div-icon',
-                            iconSize: [20, 20],
-                            iconAnchor: [10, 10]
-                        })
-                    }).addTo(map);
-
-                    marker.bindPopup(`
-                        <div style="min-width: 200px;">
-                            <strong>${team.name}</strong><br>
-                            <span style="color: #2ecc71;">Свободен</span><br>
-                            ${team.station ? `Станция: ${team.station}` : ''}
-                        </div>
-                    `);
+                    addTeamMarker(team, 'available');
                 }
             });
         })
-        .catch(error => console.error('Error loading map data:', error));
+        .catch(error => {
+            console.error('Error loading map data:', error);
+            // Show error on map
+            if (map) {
+                L.popup()
+                    .setLatLng([42.7, 25.5])
+                    .setContent('⚠️ Грешка при зареждане на данни. Опитайте отново.')
+                    .openOn(map);
+            }
+        });
+}
+
+function addIncidentMarker(incident) {
+    // Determine icon based on priority
+    let iconSize = 32;
+    let iconColor = '#e74c3c';
+
+    if (incident.priority >= 4) {
+        iconSize = 40;
+        iconColor = '#c0392b';
+    } else if (incident.priority <= 2) {
+        iconSize = 24;
+        iconColor = '#f39c12';
+    }
+
+    // Create custom icon
+    const icon = L.divIcon({
+        html: `<i class="fas fa-fire" style="color: ${iconColor}; font-size: ${iconSize}px; text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);"></i>`,
+        className: 'custom-div-icon',
+        iconSize: [iconSize, iconSize],
+        iconAnchor: [iconSize/2, iconSize/2]
+    });
+
+    const marker = L.marker([incident.latitude, incident.longitude], { icon })
+        .addTo(map)
+        .bindPopup(`
+            <div style="min-width: 220px;">
+                <strong style="font-size: 16px; color: #c0392b;">${incident.incident_number}</strong>
+                <div style="margin: 5px 0;">
+                    <span class="status-badge ${incident.status}">${incident.status}</span>
+                    <span style="margin-left: 8px; color: #666;">Приоритет: ${incident.priority}/5</span>
+                </div>
+                <div style="font-size: 13px; color: #555; margin: 5px 0;">
+                    <i class="fas fa-tag"></i> ${incident.type}
+                </div>
+                <div style="font-size: 13px; color: #555; margin: 5px 0;">
+                    <i class="fas fa-map-pin"></i> ${incident.address || 'Няма адрес'}
+                </div>
+                ${incident.fire_front ? `<div style="font-size: 12px; color: #e67e22; margin: 5px 0;">
+                    <i class="fas fa-fire-extinguisher"></i> Фронт на огъня: Активен
+                </div>` : ''}
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a href="/incidents/${incident.id}" class="btn btn-primary" style="padding: 4px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
+                        <i class="fas fa-eye"></i> Преглед
+                    </a>
+                    <a href="/incidents/${incident.id}/map" class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px; text-decoration: none; display: inline-block; background: #3498db; color: #fff; border-radius: 4px;">
+                        <i class="fas fa-map-marked-alt"></i> Карта
+                    </a>
+                </div>
+            </div>
+        `);
+
+    incidentMarkers.push(marker);
+}
+
+function addTeamMarker(team, type) {
+    let iconColor = type === 'active' ? '#3498db' : '#2ecc71';
+    let iconSize = type === 'active' ? 32 : 24;
+
+    const icon = L.divIcon({
+        html: `<i class="fas fa-truck" style="color: ${iconColor}; font-size: ${iconSize}px; text-shadow: 0 0 8px rgba(0,0,0,0.3);"></i>`,
+        className: 'custom-div-icon',
+        iconSize: [iconSize, iconSize],
+        iconAnchor: [iconSize/2, iconSize/2]
+    });
+
+    const popupContent = `
+        <div style="min-width: 180px;">
+            <strong style="font-size: 15px;">${team.name}</strong>
+            <div style="margin: 5px 0;">
+                <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px;
+                    ${type === 'active' ? 'background: #3498db; color: #fff;' : 'background: #2ecc71; color: #fff;'}">
+                    ${type === 'active' ? 'В действие' : 'Свободен'}
+                </span>
+            </div>
+            ${team.station ? `<div style="font-size: 13px; color: #555;"><i class="fas fa-building"></i> ${team.station}</div>` : ''}
+            ${team.current_incident_id ? `
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                    <a href="/incidents/${team.current_incident_id}" style="color: #3498db; text-decoration: none; font-size: 13px;">
+                        <i class="fas fa-fire"></i> Към произшествие
+                    </a>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    const marker = L.marker([team.latitude, team.longitude], { icon })
+        .addTo(map)
+        .bindPopup(popupContent);
+
+    teamMarkers.push(marker);
+}
+
+function clearMarkers() {
+    // Remove incident markers
+    incidentMarkers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+    incidentMarkers = [];
+
+    // Remove team markers
+    teamMarkers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+    teamMarkers = [];
+}
+
+function updateStats(data) {
+    // Filter active incidents (not resolved or closed)
+    const activeIncidents = data.incidents.filter(inc =>
+        !['resolved', 'closed'].includes(inc.status)
+    );
+
+    document.getElementById('incidentCount').textContent = activeIncidents.length;
+    document.getElementById('activeTeamCount').textContent = data.active_teams.length;
+    document.getElementById('availableTeamCount').textContent = data.available_teams.length;
+}
+
+function refreshMap() {
+    // Show loading indicator
+    const btn = document.querySelector('.map-controls .btn-secondary');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Зареждане...';
+        btn.disabled = true;
+    }
+
+    loadMapData();
+
+    setTimeout(() => {
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Обнови';
+            btn.disabled = false;
+        }
+    }, 1000);
+}
+
+function zoomToIncidents() {
+    if (incidentMarkers.length === 0) {
+        alert('Няма активни произшествия на картата.');
+        return;
+    }
+
+    // Create a group of all incident markers
+    const group = L.featureGroup(incidentMarkers);
+    map.fitBounds(group.getBounds(), { padding: [50, 50] });
+}
+
+function zoomToTeams() {
+    if (teamMarkers.length === 0) {
+        alert('Няма екипи на картата.');
+        return;
+    }
+
+    const group = L.featureGroup(teamMarkers);
+    map.fitBounds(group.getBounds(), { padding: [50, 50] });
+}
+
+function resetMapView() {
+    map.setView([42.7, 25.5], 7);
+}
+
+// Clean up interval when page is unloaded
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
 });
+
+// Handle errors
+window.addEventListener('error', function(e) {
+    console.error('Map error:', e);
+});
+
+// Make functions globally available
+window.refreshMap = refreshMap;
+window.zoomToIncidents = zoomToIncidents;
+window.zoomToTeams = zoomToTeams;
+window.resetMapView = resetMapView;
 </script>
 {% endblock %}

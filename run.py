@@ -1,7 +1,10 @@
+# run.py
 import os
+import sys
 from dotenv import load_dotenv
-from app import create_app
-from app.init_db import init_database
+
+# Add the current directory to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +21,10 @@ if missing:
 
 print("✅ All required environment variables are set.")
 
+# Import app
+from app import create_app, socketio
+from app.init_db import init_database
+
 app = create_app()
 
 if __name__ == '__main__':
@@ -31,8 +38,13 @@ if __name__ == '__main__':
             exit(1)
 
     debug = os.getenv('DEBUG', 'False').lower() == 'true'
-    print(f"Starting GDPBZN application on http://localhost:5000")
-    print(f"Debug mode: {debug}")
-    print(f"Admin credentials: admin@gdpbzn.bg / admin123")
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5000))
 
-    app.run(host='0.0.0.0', port=5000, debug=debug)
+    print(f"Server: http://localhost:{port}")
+    print(f"Debug mode: {debug}")
+    print(f"Admin: admin@gdpbzn.bg / admin123")
+
+
+    # Run with socketio
+    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True)

@@ -9,7 +9,7 @@ class User(UserMixin):
     """User model using direct database access"""
 
     def __init__(self, data=None):
-        # Initialize all attributes with defaults FIRST
+        # Initialize all attributes with defaults
         self.id = None
         self.email = None
         self.username = None
@@ -29,7 +29,6 @@ class User(UserMixin):
         self.created_at = None
         self.updated_at = None
 
-        # Then override with data if provided
         if data:
             self.id = data.get('id')
             self.email = data.get('email')
@@ -111,47 +110,55 @@ class User(UserMixin):
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save user to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:  # Now self.id always exists (even if None)
+            if self.id:  # Update existing user
                 cur.execute('''
-                            UPDATE users
-                            SET email          = %s,
-                                username       = %s,
-                                first_name     = %s,
-                                last_name      = %s,
-                                phone          = %s,
-                                role           = %s,
-                                team_id        = %s,
-                                is_available   = %s,
-                                is_on_leave    = %s,
-                                leave_start    = %s,
-                                leave_end      = %s,
-                                last_latitude  = %s,
-                                last_longitude = %s,
-                                fcm_token      = %s,
-                                updated_at     = CURRENT_TIMESTAMP
-                            WHERE id = %s
-                            ''', (
-                                self.email, self.username, self.first_name, self.last_name,
-                                self.phone, self.role, self.team_id, self.is_available,
-                                self.is_on_leave, self.leave_start, self.leave_end,
-                                self.last_latitude, self.last_longitude, self.fcm_token,
-                                self.id
-                            ))
-            else:
+                    UPDATE users SET
+                        email = %s,
+                        username = %s,
+                        first_name = %s,
+                        last_name = %s,
+                        phone = %s,
+                        role = %s,
+                        team_id = %s,
+                        is_available = %s,
+                        is_on_leave = %s,
+                        leave_start = %s,
+                        leave_end = %s,
+                        last_latitude = %s,
+                        last_longitude = %s,
+                        fcm_token = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    RETURNING id
+                ''', (
+                    self.email, self.username, self.first_name, self.last_name,
+                    self.phone, self.role, self.team_id, self.is_available,
+                    self.is_on_leave, self.leave_start, self.leave_end,
+                    self.last_latitude, self.last_longitude, self.fcm_token,
+                    self.id
+                ))
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new user
                 cur.execute('''
-                            INSERT INTO users
-                            (email, username, password_hash, first_name, last_name, phone, role, team_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
-                            ''', (
-                                self.email, self.username, self.password_hash,
-                                self.first_name, self.last_name, self.phone,
-                                self.role, self.team_id
-                            ))
+                    INSERT INTO users
+                    (email, username, password_hash, first_name, last_name, phone, role, team_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                ''', (
+                    self.email, self.username, self.password_hash,
+                    self.first_name, self.last_name, self.phone,
+                    self.role, self.team_id
+                ))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
+                db.commit()
+                return self.id
 
     def delete(self):
         conn = db.get_connection()
@@ -163,16 +170,16 @@ class User(UserMixin):
         conn = db.get_connection()
         with conn.cursor() as cur:
             cur.execute('''
-                        UPDATE users
-                        SET last_latitude        = %s,
-                            last_longitude       = %s,
-                            last_location_update = CURRENT_TIMESTAMP
-                        WHERE id = %s
-                        ''', (latitude, longitude, self.id))
+                UPDATE users
+                SET last_latitude = %s,
+                    last_longitude = %s,
+                    last_location_update = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (latitude, longitude, self.id))
             db.commit()
             self.last_latitude = latitude
             self.last_longitude = longitude
-
 
 class Team:
     """Team model using direct database access"""
@@ -191,6 +198,19 @@ class Team:
             self.longitude = data.get('longitude')
             self.created_at = data.get('created_at')
             self.updated_at = data.get('updated_at')
+        else:
+            self.id = None
+            self.name = None
+            self.code = None
+            self.station = None
+            self.vehicle_type = None
+            self.vehicle_registration = None
+            self.status = 'available'
+            self.current_incident_id = None
+            self.latitude = None
+            self.longitude = None
+            self.created_at = None
+            self.updated_at = None
 
     @classmethod
     def get_by_id(cls, team_id):
@@ -234,54 +254,60 @@ class Team:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save team to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:  # Update existing user
+            if self.id:  # Update existing team
                 cur.execute('''
-                    UPDATE users SET
-                        email = %s,
-                        username = %s,
-                        first_name = %s,
-                        last_name = %s,
-                        phone = %s,
-                        role = %s,
-                        team_id = %s,
-                        is_available = %s,
-                        is_on_leave = %s,
-                        leave_start = %s,
-                        leave_end = %s,
-                        last_latitude = %s,
-                        last_longitude = %s,
-                        fcm_token = %s,
+                    UPDATE teams SET 
+                        name = %s, 
+                        code = %s, 
+                        station = %s,
+                        vehicle_type = %s, 
+                        vehicle_registration = %s,
+                        status = %s, 
+                        current_incident_id = %s,
+                        latitude = %s, 
+                        longitude = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
+                    RETURNING id
                 ''', (
-                    self.email, self.username, self.first_name, self.last_name,
-                    self.phone, self.role, self.team_id, self.is_available,
-                    self.is_on_leave, self.leave_start, self.leave_end,
-                    self.last_latitude, self.last_longitude, self.fcm_token,
+                    self.name, self.code, self.station,
+                    self.vehicle_type, self.vehicle_registration,
+                    self.status, self.current_incident_id,
+                    self.latitude, self.longitude,
                     self.id
                 ))
-            else:  # Insert new user
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new team
                 cur.execute('''
-                    INSERT INTO users
-                    (email, username, password_hash, first_name, last_name, phone, role, team_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                    INSERT INTO teams 
+                    (name, code, station, vehicle_type, vehicle_registration, status)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id
                 ''', (
-                    self.email, self.username, self.password_hash,
-                    self.first_name, self.last_name, self.phone,
-                    self.role, self.team_id
+                    self.name, self.code, self.station,
+                    self.vehicle_type, self.vehicle_registration,
+                    self.status
                 ))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
+                db.commit()
+                return self.id
 
     def update_location(self, latitude, longitude):
         conn = db.get_connection()
         with conn.cursor() as cur:
             cur.execute('''
                 UPDATE teams 
-                SET latitude = %s, longitude = %s, last_location_update = CURRENT_TIMESTAMP
+                SET latitude = %s, 
+                    longitude = %s, 
+                    last_location_update = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             ''', (latitude, longitude, self.id))
             db.commit()
@@ -297,13 +323,12 @@ class Team:
             cur.execute('DELETE FROM teams WHERE id = %s', (self.id,))
             db.commit()
 
-
 class Incident:
     """Incident model using direct database access"""
 
     def __init__(self, data=None):
         # Initialize all attributes with defaults
-        self._id = None  # Use private attribute with property
+        self._id = None
         self.incident_number = None
         self.type = None
         self.status = 'reported'
@@ -327,7 +352,6 @@ class Incident:
         self.created_at = None
         self.updated_at = None
 
-        # Override with data if provided
         if data:
             self._id = data.get('id')
             self.incident_number = data.get('incident_number')
@@ -355,17 +379,11 @@ class Incident:
 
     @property
     def id(self):
-        """Get the incident ID"""
         return self._id
 
     @id.setter
     def id(self, value):
-        """Set the incident ID"""
         self._id = value
-
-    def get_id(self):
-        """Return the ID for Flask-Login compatibility"""
-        return self.id
 
     @classmethod
     def get_by_id(cls, incident_id):
@@ -423,14 +441,24 @@ class Incident:
             if self._id:  # Update existing incident
                 cur.execute('''
                     UPDATE incidents SET 
-                        type = %s, status = %s, priority = %s,
-                        address = %s, latitude = %s, longitude = %s,
-                        description = %s, hazardous_materials = %s,
-                        action_plan = %s, reporter_name = %s,
-                        reporter_phone = %s, dispatcher_id = %s,
-                        dispatched_at = %s, fire_front = %s,
-                        wind_direction = %s, wind_speed = %s,
-                        resolved_at = %s, closed_at = %s,
+                        type = %s, 
+                        status = %s, 
+                        priority = %s,
+                        address = %s, 
+                        latitude = %s, 
+                        longitude = %s,
+                        description = %s, 
+                        hazardous_materials = %s,
+                        action_plan = %s, 
+                        reporter_name = %s,
+                        reporter_phone = %s, 
+                        dispatcher_id = %s,
+                        dispatched_at = %s, 
+                        fire_front = %s,
+                        wind_direction = %s, 
+                        wind_speed = %s,
+                        resolved_at = %s, 
+                        closed_at = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                     RETURNING id
@@ -476,7 +504,6 @@ class Incident:
                 return self._id
 
     def get_assignments(self):
-        """Get assignments for this incident"""
         if not self._id:
             return []
         conn = db.get_connection()
@@ -491,7 +518,6 @@ class Incident:
             return cur.fetchall()
 
     def get_communications(self, limit=50):
-        """Get communications for this incident"""
         if not self._id:
             return []
         conn = db.get_connection()
@@ -507,7 +533,6 @@ class Incident:
             return cur.fetchall()
 
     def delete(self):
-        """Delete this incident"""
         if not self._id:
             return
         conn = db.get_connection()
@@ -533,6 +558,16 @@ class IncidentAssignment:
             self.assigned_at = data.get('assigned_at')
             self.started_at = data.get('started_at')
             self.completed_at = data.get('completed_at')
+        else:
+            self.id = None
+            self.incident_id = None
+            self.user_id = None
+            self.task = None
+            self.status = 'assigned'
+            self.resources_used = None
+            self.assigned_at = None
+            self.started_at = None
+            self.completed_at = None
 
     @classmethod
     def get_by_id(cls, assignment_id):
@@ -552,34 +587,66 @@ class IncidentAssignment:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save assignment to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self.id:  # Update existing
                 cur.execute('''
                     UPDATE incident_assignments SET
-                        task = %s, status = %s, resources_used = %s,
-                        started_at = %s, completed_at = %s
+                        task = %s, 
+                        status = %s, 
+                        resources_used = %s,
+                        started_at = %s, 
+                        completed_at = %s,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
-                ''', (self.task, self.status,
-                      json.dumps(self.resources_used) if self.resources_used else None,
-                      self.started_at, self.completed_at, self.id))
-            else:
+                    RETURNING id
+                ''', (
+                    self.task, self.status,
+                    json.dumps(self.resources_used) if self.resources_used else None,
+                    self.started_at, self.completed_at,
+                    self.id
+                ))
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new
                 cur.execute('''
                     INSERT INTO incident_assignments 
                     (incident_id, user_id, task, status, resources_used)
                     VALUES (%s, %s, %s, %s, %s)
                     RETURNING id
-                ''', (self.incident_id, self.user_id, self.task, self.status,
-                      json.dumps(self.resources_used) if self.resources_used else None))
+                ''', (
+                    self.incident_id, self.user_id, self.task, self.status,
+                    json.dumps(self.resources_used) if self.resources_used else None
+                ))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
-
+                db.commit()
+                return self.id
 
 class Communication:
     """Communication model"""
 
     def __init__(self, data=None):
+        # Initialize all attributes with defaults
+        self.id = None
+        self.incident_id = None
+        self.user_id = None
+        self.message_type = 'text'
+        self.content = None
+        self.media_url = None
+        self.thumbnail_url = None
+        self.latitude = None
+        self.longitude = None
+        self.is_read = False
+        self.is_template = False
+        self.template_id = None
+        self.created_at = None
+        self.read_at = None
+        self.updated_at = None
+
         if data:
             self.id = data.get('id')
             self.incident_id = data.get('incident_id')
@@ -594,6 +661,8 @@ class Communication:
             self.is_template = data.get('is_template', False)
             self.template_id = data.get('template_id')
             self.created_at = data.get('created_at')
+            self.read_at = data.get('read_at')
+            self.updated_at = data.get('updated_at')
 
     @classmethod
     def get_by_id(cls, comm_id):
@@ -633,15 +702,25 @@ class Communication:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save communication to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self.id:  # Update existing
                 cur.execute('''
                     UPDATE communications SET
-                        content = %s, is_read = %s, read_at = CURRENT_TIMESTAMP
+                        content = %s, 
+                        is_read = %s, 
+                        read_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
+                    RETURNING id
                 ''', (self.content, self.is_read, self.id))
-            else:
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new
                 cur.execute('''
                     INSERT INTO communications 
                     (incident_id, user_id, message_type, content, media_url, thumbnail_url,
@@ -655,20 +734,23 @@ class Communication:
                     self.is_template, self.template_id
                 ))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
+                db.commit()
+                return self.id
 
     def mark_read(self):
+        if not self.id:
+            return
         conn = db.get_connection()
         with conn.cursor() as cur:
             cur.execute('''
                 UPDATE communications 
-                SET is_read = true, read_at = CURRENT_TIMESTAMP
+                SET is_read = true, 
+                    read_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             ''', (self.id,))
             db.commit()
             self.is_read = True
-
 
 class MessageTemplate:
     """Message Template model"""
@@ -683,6 +765,15 @@ class MessageTemplate:
             self.created_by = data.get('created_by')
             self.created_at = data.get('created_at')
             self.updated_at = data.get('updated_at')
+        else:
+            self.id = None
+            self.name = None
+            self.category = None
+            self.content = None
+            self.is_active = True
+            self.created_by = None
+            self.created_at = None
+            self.updated_at = None
 
     @classmethod
     def get_by_id(cls, template_id):
@@ -712,25 +803,34 @@ class MessageTemplate:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save template to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self.id:  # Update existing
                 cur.execute('''
                     UPDATE message_templates SET
-                        name = %s, category = %s, content = %s,
-                        is_active = %s, updated_at = CURRENT_TIMESTAMP
+                        name = %s, 
+                        category = %s, 
+                        content = %s,
+                        is_active = %s, 
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
+                    RETURNING id
                 ''', (self.name, self.category, self.content, self.is_active, self.id))
-            else:
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new
                 cur.execute('''
                     INSERT INTO message_templates (name, category, content, created_by)
                     VALUES (%s, %s, %s, %s)
                     RETURNING id
                 ''', (self.name, self.category, self.content, self.created_by))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
-
+                db.commit()
+                return self.id
 
 class Resource:
     """Resource model"""
@@ -747,6 +847,17 @@ class Resource:
             self.current_water = data.get('current_water')
             self.created_at = data.get('created_at')
             self.updated_at = data.get('updated_at')
+        else:
+            self.id = None
+            self.name = None
+            self.type = None
+            self.quantity = 1
+            self.available = 1
+            self.team_id = None
+            self.water_capacity = None
+            self.current_water = None
+            self.created_at = None
+            self.updated_at = None
 
     @classmethod
     def get_by_id(cls, resource_id):
@@ -773,29 +884,45 @@ class Resource:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save resource to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self.id:  # Update existing
                 cur.execute('''
                     UPDATE resources SET
-                        name = %s, type = %s, quantity = %s, available = %s,
-                        team_id = %s, water_capacity = %s, current_water = %s,
+                        name = %s, 
+                        type = %s, 
+                        quantity = %s, 
+                        available = %s,
+                        team_id = %s, 
+                        water_capacity = %s, 
+                        current_water = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
-                ''', (self.name, self.type, self.quantity, self.available,
-                      self.team_id, self.water_capacity, self.current_water, self.id))
-            else:
+                    RETURNING id
+                ''', (
+                    self.name, self.type, self.quantity, self.available,
+                    self.team_id, self.water_capacity, self.current_water,
+                    self.id
+                ))
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new
                 cur.execute('''
                     INSERT INTO resources 
                     (name, type, quantity, available, team_id, water_capacity, current_water)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
-                ''', (self.name, self.type, self.quantity, self.available,
-                      self.team_id, self.water_capacity, self.current_water))
+                ''', (
+                    self.name, self.type, self.quantity, self.available,
+                    self.team_id, self.water_capacity, self.current_water
+                ))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
-
+                db.commit()
+                return self.id
 
 class Notification:
     """Notification model"""
@@ -812,6 +939,19 @@ class Notification:
             self.data = data.get('data')
             self.created_at = data.get('created_at')
             self.read_at = data.get('read_at')
+            self.updated_at = data.get('updated_at')
+        else:
+            self.id = None
+            self.user_id = None
+            self.title = None
+            self.message = None
+            self.type = None
+            self.is_read = False
+            self.incident_id = None
+            self.data = None
+            self.created_at = None
+            self.read_at = None
+            self.updated_at = None
 
     @classmethod
     def get_by_user(cls, user_id, limit=50):
@@ -837,32 +977,47 @@ class Notification:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save notification to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self.id:  # Update existing
                 cur.execute('''
                     UPDATE notifications SET
-                        is_read = %s, read_at = CURRENT_TIMESTAMP
+                        is_read = %s, 
+                        read_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
+                    RETURNING id
                 ''', (self.is_read, self.id))
-            else:
+                result = cur.fetchone()
+                if result:
+                    self.id = result[0]
+                db.commit()
+                return self.id
+            else:  # Insert new
                 cur.execute('''
                     INSERT INTO notifications 
                     (user_id, title, message, type, incident_id, data)
                     VALUES (%s, %s, %s, %s, %s, %s)
                     RETURNING id
-                ''', (self.user_id, self.title, self.message, self.type,
-                      self.incident_id, json.dumps(self.data) if self.data else None))
+                ''', (
+                    self.user_id, self.title, self.message, self.type,
+                    self.incident_id, json.dumps(self.data) if self.data else None
+                ))
                 self.id = cur.fetchone()[0]
-            db.commit()
-        return self.id
+                db.commit()
+                return self.id
 
     def mark_read(self):
+        if not self.id:
+            return
         conn = db.get_connection()
         with conn.cursor() as cur:
             cur.execute('''
                 UPDATE notifications 
-                SET is_read = true, read_at = CURRENT_TIMESTAMP
+                SET is_read = true, 
+                    read_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             ''', (self.id,))
             db.commit()

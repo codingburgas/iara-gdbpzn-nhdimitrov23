@@ -53,7 +53,7 @@ def init_database():
                 )
             ''')
 
-            # Incidents table
+            # Incidents table - WITH updated_at
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS incidents (
                     id SERIAL PRIMARY KEY,
@@ -76,11 +76,13 @@ def init_database():
                     wind_speed DECIMAL(5, 2),
                     reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     resolved_at TIMESTAMP,
-                    closed_at TIMESTAMP
+                    closed_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
 
-            # Incident assignments table
+            # Incident assignments table - WITH updated_at
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS incident_assignments (
                     id SERIAL PRIMARY KEY,
@@ -91,11 +93,13 @@ def init_database():
                     resources_used JSON,
                     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     started_at TIMESTAMP,
-                    completed_at TIMESTAMP
+                    completed_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
 
-            # Communications table
+            # Communications table - WITH updated_at
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS communications (
                     id SERIAL PRIMARY KEY,
@@ -111,11 +115,12 @@ def init_database():
                     read_at TIMESTAMP,
                     is_template BOOLEAN DEFAULT FALSE,
                     template_id INTEGER,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
 
-            # Message templates table
+            # Message templates table - WITH updated_at
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS message_templates (
                     id SERIAL PRIMARY KEY,
@@ -129,7 +134,7 @@ def init_database():
                 )
             ''')
 
-            # Resources table
+            # Resources table - WITH updated_at
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS resources (
                     id SERIAL PRIMARY KEY,
@@ -145,7 +150,7 @@ def init_database():
                 )
             ''')
 
-            # Notifications table
+            # Notifications table - WITH updated_at
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS notifications (
                     id SERIAL PRIMARY KEY,
@@ -157,7 +162,8 @@ def init_database():
                     incident_id INTEGER REFERENCES incidents(id) ON DELETE SET NULL,
                     data JSON,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    read_at TIMESTAMP
+                    read_at TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
 
@@ -171,7 +177,7 @@ def init_database():
                 ''', ('admin@gdpbzn.bg', 'admin', admin_password, 'System', 'Administrator', 'admin'))
                 logging.info("✅ Admin user created: admin@gdpbzn.bg / admin123")
 
-            # Create sample team
+            # Create sample teams
             cur.execute('SELECT id FROM teams WHERE code = %s', ('FD001',))
             if not cur.fetchone():
                 cur.execute('''
@@ -181,7 +187,6 @@ def init_database():
                       'СА 1234 АА', 'available'))
                 logging.info("✅ Sample team created: FD001")
 
-            # Create additional sample teams
             cur.execute('SELECT id FROM teams WHERE code = %s', ('FD002',))
             if not cur.fetchone():
                 cur.execute('''
