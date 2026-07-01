@@ -1,4 +1,3 @@
-# app/routes/__init__.py
 from app.routes.auth import auth_bp
 from app.routes.incidents import incidents_bp
 from app.routes.teams import teams_bp

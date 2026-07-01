@@ -12,6 +12,8 @@
         <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
             <h3 style="margin-bottom: 20px; color: var(--text-muted);">Изпрати съобщение</h3>
             <form method="POST" action="{{ url_for('communication.send_message') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Произшествие (ID)</label>
                     <input type="number" name="incident_id" placeholder="Остави празно за общо съобщение" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">

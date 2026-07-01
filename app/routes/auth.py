@@ -1,4 +1,3 @@
-# app/routes/auth.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -41,12 +40,11 @@ def login():
             else:
                 return redirect(url_for('main.index'))
         else:
-            flash('Invalid email or password', 'danger')
+            flash('Грешен имейл или парола', 'danger')
 
     return render_template('auth/login.html')
 
 
-# app/routes/auth.py - register route
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -63,28 +61,33 @@ def register():
 
         # Validation
         if not all([email, username, password, confirm_password, first_name, last_name]):
-            flash('All fields are required', 'danger')
+            flash('Всички полета са задължителни', 'danger')
             return render_template('auth/register.html')
 
         if password != confirm_password:
-            flash('Passwords do not match', 'danger')
+            flash('Паролите не съвпадат', 'danger')
             return render_template('auth/register.html')
 
         if len(password) < 8:
-            flash('Password must be at least 8 characters', 'danger')
+            flash('Паролата трябва да бъде поне 8 символа', 'danger')
+            return render_template('auth/register.html')
+
+        # Validate email format
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            flash('Невалиден имейл адрес', 'danger')
             return render_template('auth/register.html')
 
         # Check if user exists
         if User.get_by_email(email):
-            flash('Email already registered', 'danger')
+            flash('Този имейл вече е регистриран', 'danger')
             return render_template('auth/register.html')
 
         if User.get_by_username(username):
-            flash('Username already taken', 'danger')
+            flash('Това потребителско име вече е заето', 'danger')
             return render_template('auth/register.html')
 
-        # Create user - make sure to set all fields
-        user = User()  # Creates empty user with id=None
+        # Create user
+        user = User()
         user.email = email
         user.username = username
         user.password_hash = generate_password_hash(password)
@@ -92,12 +95,11 @@ def register():
         user.last_name = last_name
         user.phone = phone
         user.role = 'firefighter'
-        user.team_id = None  # No team assigned by default
+        user.team_id = None
 
-        # Save will handle INSERT vs UPDATE
-        user_id = user.save()
+        user.save()
 
-        flash('Registration successful! Please login.', 'success')
+        flash('Регистрацията е успешна! Моля, влезте.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html')
@@ -108,7 +110,7 @@ def register():
 def logout():
     logout_user()
     session.clear()
-    flash('You have been logged out', 'info')
+    flash('Успешно излязохте от системата', 'info')
     return redirect(url_for('auth.login'))
 
 

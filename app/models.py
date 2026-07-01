@@ -1,13 +1,9 @@
-# app/models.py
 from flask_login import UserMixin
 from app.db import db
 from datetime import datetime
 import json
 import uuid
 from psycopg2.extras import RealDictCursor
-
-
-# app/models.py - Fixed User class
 
 class User(UserMixin):
     """User model using direct database access"""
@@ -240,31 +236,41 @@ class Team:
     def save(self):
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self.id:  # Update existing user
                 cur.execute('''
-                    UPDATE teams SET 
-                        name = %s, code = %s, station = %s,
-                        vehicle_type = %s, vehicle_registration = %s,
-                        status = %s, current_incident_id = %s,
-                        latitude = %s, longitude = %s,
+                    UPDATE users SET
+                        email = %s,
+                        username = %s,
+                        first_name = %s,
+                        last_name = %s,
+                        phone = %s,
+                        role = %s,
+                        team_id = %s,
+                        is_available = %s,
+                        is_on_leave = %s,
+                        leave_start = %s,
+                        leave_end = %s,
+                        last_latitude = %s,
+                        last_longitude = %s,
+                        fcm_token = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 ''', (
-                    self.name, self.code, self.station,
-                    self.vehicle_type, self.vehicle_registration,
-                    self.status, self.current_incident_id,
-                    self.latitude, self.longitude,
+                    self.email, self.username, self.first_name, self.last_name,
+                    self.phone, self.role, self.team_id, self.is_available,
+                    self.is_on_leave, self.leave_start, self.leave_end,
+                    self.last_latitude, self.last_longitude, self.fcm_token,
                     self.id
                 ))
-            else:
+            else:  # Insert new user
                 cur.execute('''
-                    INSERT INTO teams 
-                    (name, code, station, vehicle_type, vehicle_registration)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id
+                    INSERT INTO users
+                    (email, username, password_hash, first_name, last_name, phone, role, team_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
                 ''', (
-                    self.name, self.code, self.station,
-                    self.vehicle_type, self.vehicle_registration
+                    self.email, self.username, self.password_hash,
+                    self.first_name, self.last_name, self.phone,
+                    self.role, self.team_id
                 ))
                 self.id = cur.fetchone()[0]
             db.commit()
@@ -296,8 +302,34 @@ class Incident:
     """Incident model using direct database access"""
 
     def __init__(self, data=None):
+        # Initialize all attributes with defaults
+        self._id = None  # Use private attribute with property
+        self.incident_number = None
+        self.type = None
+        self.status = 'reported'
+        self.priority = 1
+        self.address = None
+        self.latitude = None
+        self.longitude = None
+        self.description = None
+        self.hazardous_materials = None
+        self.action_plan = None
+        self.reporter_name = None
+        self.reporter_phone = None
+        self.dispatcher_id = None
+        self.dispatched_at = None
+        self.fire_front = None
+        self.wind_direction = None
+        self.wind_speed = None
+        self.reported_at = None
+        self.resolved_at = None
+        self.closed_at = None
+        self.created_at = None
+        self.updated_at = None
+
+        # Override with data if provided
         if data:
-            self.id = data.get('id')
+            self._id = data.get('id')
             self.incident_number = data.get('incident_number')
             self.type = data.get('type')
             self.status = data.get('status', 'reported')
@@ -318,6 +350,22 @@ class Incident:
             self.reported_at = data.get('reported_at')
             self.resolved_at = data.get('resolved_at')
             self.closed_at = data.get('closed_at')
+            self.created_at = data.get('created_at')
+            self.updated_at = data.get('updated_at')
+
+    @property
+    def id(self):
+        """Get the incident ID"""
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        """Set the incident ID"""
+        self._id = value
+
+    def get_id(self):
+        """Return the ID for Flask-Login compatibility"""
+        return self.id
 
     @classmethod
     def get_by_id(cls, incident_id):
@@ -369,9 +417,10 @@ class Incident:
             return [cls(row) for row in cur.fetchall()]
 
     def save(self):
+        """Save incident to database - returns the ID"""
         conn = db.get_connection()
         with conn.cursor() as cur:
-            if self.id:
+            if self._id:  # Update existing incident
                 cur.execute('''
                     UPDATE incidents SET 
                         type = %s, status = %s, priority = %s,
@@ -381,8 +430,10 @@ class Incident:
                         reporter_phone = %s, dispatcher_id = %s,
                         dispatched_at = %s, fire_front = %s,
                         wind_direction = %s, wind_speed = %s,
-                        resolved_at = %s, closed_at = %s
+                        resolved_at = %s, closed_at = %s,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
+                    RETURNING id
                 ''', (
                     self.type, self.status, self.priority,
                     self.address, self.latitude, self.longitude,
@@ -393,11 +444,17 @@ class Incident:
                     json.dumps(self.fire_front) if self.fire_front else None,
                     self.wind_direction, self.wind_speed,
                     self.resolved_at, self.closed_at,
-                    self.id
+                    self._id
                 ))
-            else:
+                result = cur.fetchone()
+                if result:
+                    self._id = result[0]
+                db.commit()
+                return self._id
+            else:  # Insert new incident
                 # Generate incident number
                 incident_number = f"INC-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+                self.incident_number = incident_number
 
                 cur.execute('''
                     INSERT INTO incidents 
@@ -414,12 +471,14 @@ class Incident:
                     self.reporter_phone, self.dispatcher_id,
                     self.dispatched_at
                 ))
-                self.id = cur.fetchone()[0]
-                self.incident_number = incident_number
-            db.commit()
-        return self.id
+                self._id = cur.fetchone()[0]
+                db.commit()
+                return self._id
 
     def get_assignments(self):
+        """Get assignments for this incident"""
+        if not self._id:
+            return []
         conn = db.get_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute('''
@@ -428,10 +487,13 @@ class Incident:
                 JOIN users u ON a.user_id = u.id
                 WHERE a.incident_id = %s
                 ORDER BY a.assigned_at DESC
-            ''', (self.id,))
+            ''', (self._id,))
             return cur.fetchall()
 
     def get_communications(self, limit=50):
+        """Get communications for this incident"""
+        if not self._id:
+            return []
         conn = db.get_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute('''
@@ -441,15 +503,21 @@ class Incident:
                 WHERE c.incident_id = %s
                 ORDER BY c.created_at DESC
                 LIMIT %s
-            ''', (self.id, limit))
+            ''', (self._id, limit))
             return cur.fetchall()
 
     def delete(self):
+        """Delete this incident"""
+        if not self._id:
+            return
         conn = db.get_connection()
         with conn.cursor() as cur:
-            cur.execute('DELETE FROM incidents WHERE id = %s', (self.id,))
+            cur.execute('DELETE FROM incidents WHERE id = %s', (self._id,))
             db.commit()
+            self._id = None
 
+    def __repr__(self):
+        return f"<Incident {self.incident_number or 'New'}>"
 
 class IncidentAssignment:
     """Incident Assignment model"""

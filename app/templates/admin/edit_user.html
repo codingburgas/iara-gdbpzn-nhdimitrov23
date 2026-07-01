@@ -1,0 +1,97 @@
+<!-- app/templates/admin/edit_user.html -->
+{% extends "base.html" %}
+
+{% block title %}Редактиране на потребител | ГДПБЗН{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад към потребителите
+    </a>
+
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 36px; margin-bottom: 10px;">Редактиране на потребител</h1>
+    <p style="color: var(--text-muted); margin-bottom: 30px;">Редактирайте информацията за {{ user.first_name }} {{ user.last_name }}</p>
+
+    <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; max-width: 600px;">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="margin-bottom: 15px;">
+                    <label for="first_name" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Име *</label>
+                    <input type="text" id="first_name" name="first_name" required value="{{ user.first_name }}" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="last_name" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Фамилия *</label>
+                    <input type="text" id="last_name" name="last_name" required value="{{ user.last_name }}" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="username" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Потребителско име</label>
+                <input type="text" id="username" value="{{ user.username }}" disabled style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-muted); opacity: 0.7;">
+                <p style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">Потребителското име не може да бъде променяно</p>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="email" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Имейл</label>
+                <input type="email" id="email" value="{{ user.email }}" disabled style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-muted); opacity: 0.7;">
+                <p style="color: var(--text-muted); font-size: 11px; margin-top: 3px;">Имейлът не може да бъде променян</p>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="phone" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Телефон</label>
+                <input type="tel" id="phone" name="phone" value="{{ user.phone or '' }}" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="role" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Роля *</label>
+                <select id="role" name="role" required style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    <option value="firefighter" {% if user.role == 'firefighter' %}selected{% endif %}>Пожарникар</option>
+                    <option value="team_leader" {% if user.role == 'team_leader' %}selected{% endif %}>Ръководител на екип</option>
+                    <option value="dispatcher" {% if user.role == 'dispatcher' %}selected{% endif %}>Диспечер</option>
+                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Администратор</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="team_id" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Екип</label>
+                <select id="team_id" name="team_id" style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    <option value="">Няма</option>
+                    {% for team in teams %}
+                    <option value="{{ team.id }}" {% if user.team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Статус</label>
+                <div style="display: flex; gap: 20px;">
+                    <label style="display: flex; align-items: center; gap: 5px; color: var(--text-light); cursor: pointer;">
+                        <input type="checkbox" name="is_available" {% if user.is_available %}checked{% endif %}>
+                        <span>Наличен</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; color: var(--text-light); cursor: pointer;">
+                        <input type="checkbox" name="is_on_leave" {% if user.is_on_leave %}checked{% endif %}>
+                        <span>В отпуск</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <label for="password" style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 13px;">Нова парола (оставете празно за да не променяте)</label>
+                <input type="password" id="password" name="password" placeholder="Въведете нова парола..." style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px;">
+                    <i class="fas fa-save"></i> Запази промените
+                </button>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary" style="flex: 1; justify-content: center; padding: 12px;">
+                    Отказ
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -3,6 +3,33 @@
 
 {% block title %}Ново произшествие | ГДПБЗН{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #locationMap {
+        height: 300px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 15px;
+    }
+    .map-instructions {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container" style="padding: 40px 0;">
     <a href="{{ url_for('incidents.dashboard') }}" class="btn btn-secondary" style="margin-bottom: 20px;">
@@ -14,96 +41,105 @@
 
     <div style="background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px;">
         <form method="POST" id="incidentForm">
-            <!-- Incident Type -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Map Selection -->
             <div style="margin-bottom: 20px;">
-                <label for="type" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Тип произшествие *</label>
-                <select id="type" name="type" required style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
-                    <option value="">Изберете тип</option>
-                    <option value="fire">Пожар</option>
-                    <option value="rescue">Спасителна операция</option>
-                    <option value="flood">Наводнение</option>
-                    <option value="earthquake">Земетресение</option>
-                    <option value="hazmat">Опасни материали</option>
-                    <option value="road_accident">Пътнотранспортно произшествие</option>
-                    <option value="industrial">Промишлена авария</option>
-                    <option value="other">Друго</option>
-                </select>
-            </div>
-
-            <!-- Priority -->
-            <div style="margin-bottom: 20px;">
-                <label for="priority" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Приоритет *</label>
-                <select id="priority" name="priority" required style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
-                    <option value="1">1 - Нисък</option>
-                    <option value="2">2 - Среден</option>
-                    <option value="3" selected>3 - Висок</option>
-                    <option value="4">4 - Много висок</option>
-                    <option value="5">5 - Критичен</option>
-                </select>
-            </div>
-
-            <!-- Address -->
-            <div style="margin-bottom: 20px;">
-                <label for="address" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Адрес *</label>
-                <input type="text" id="address" name="address" required placeholder="Напр. ул. Цар Борис III 47, София" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
-            </div>
-
-            <!-- GPS Coordinates -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                <div>
-                    <label for="latitude" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Географска ширина *</label>
-                    <input type="number" id="latitude" name="latitude" step="0.00000001" required placeholder="42.6977" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                <h4 style="color: var(--text-muted); margin-bottom: 10px;">Изберете местоположение на картата</h4>
+                <p class="map-instructions">Кликнете върху картата, за да изберете местоположение, или въведете координати ръчно</p>
+                <div id="locationMap"></div>
+                <div class="form-row">
+                    <div>
+                        <label for="latitude" style="display: block; margin-bottom: 5px; color: var(--text-muted);">Географска ширина *</label>
+                        <input type="number" id="latitude" name="latitude" step="0.00000001" required
+                               placeholder="42.6977"
+                               style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    </div>
+                    <div>
+                        <label for="longitude" style="display: block; margin-bottom: 5px; color: var(--text-muted);">Географска дължина *</label>
+                        <input type="number" id="longitude" name="longitude" step="0.00000001" required
+                               placeholder="23.3219"
+                               style="width: 100%; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                    </div>
                 </div>
-                <div>
-                    <label for="longitude" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Географска дължина *</label>
-                    <input type="number" id="longitude" name="longitude" step="0.00000001" required placeholder="23.3219" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
-                </div>
+                <button type="button" id="useCurrentLocation" class="btn btn-secondary" style="margin-top: 10px;">
+                    <i class="fas fa-location-arrow"></i> Използвай текущо местоположение
+                </button>
             </div>
 
-            <!-- Reporter Info -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                <div>
-                    <label for="reporter_name" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Име на докладвалия</label>
-                    <input type="text" id="reporter_name" name="reporter_name" placeholder="Име на лицето" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+            <div class="form-row">
+                <div style="margin-bottom: 20px;">
+                    <label for="type" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Тип произшествие *</label>
+                    <select id="type" name="type" required style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                        <option value="">Изберете тип</option>
+                        <option value="fire">Пожар</option>
+                        <option value="rescue">Спасителна операция</option>
+                        <option value="flood">Наводнение</option>
+                        <option value="earthquake">Земетресение</option>
+                        <option value="hazmat">Опасни материали</option>
+                        <option value="road_accident">Пътнотранспортно произшествие</option>
+                        <option value="industrial">Промишлена авария</option>
+                        <option value="other">Друго</option>
+                    </select>
                 </div>
-                <div>
-                    <label for="reporter_phone" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Телефон за връзка</label>
-                    <input type="tel" id="reporter_phone" name="reporter_phone" placeholder="0888 123 456" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+
+                <div style="margin-bottom: 20px;">
+                    <label for="priority" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Приоритет *</label>
+                    <select id="priority" name="priority" required style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                        <option value="1">1 - Нисък</option>
+                        <option value="2">2 - Среден</option>
+                        <option value="3" selected>3 - Висок</option>
+                        <option value="4">4 - Много висок</option>
+                        <option value="5">5 - Критичен</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Description -->
             <div style="margin-bottom: 20px;">
-                <label for="description" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Описание</label>
-                <textarea id="description" name="description" rows="4" placeholder="Подробно описание на ситуацията..." style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
+                <label for="address" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Адрес *</label>
+                <input type="text" id="address" name="address" required placeholder="Напр. ул. Цар Борис III 47, София"
+                       style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
             </div>
 
-            <!-- Hazardous Materials -->
-            <div style="margin-bottom: 20px;">
-                <label for="hazardous_materials" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Опасни вещества</label>
-                <textarea id="hazardous_materials" name="hazardous_materials" rows="3" placeholder="Идентифицирани опасни материали на място..." style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
+            <div class="form-row">
+                <div style="margin-bottom: 20px;">
+                    <label for="reporter_name" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Име на докладвалия</label>
+                    <input type="text" id="reporter_name" name="reporter_name" placeholder="Име на лицето"
+                           style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label for="reporter_phone" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Телефон за връзка</label>
+                    <input type="tel" id="reporter_phone" name="reporter_phone" placeholder="0888 123 456"
+                           style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
+                </div>
             </div>
 
-            <!-- Action Plan -->
             <div style="margin-bottom: 20px;">
-                <label for="action_plan" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">План за действие</label>
-                <textarea id="action_plan" name="action_plan" rows="3" placeholder="Предварителен план за действие..." style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
+                <label for="description" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Описание</label>
+                <textarea id="description" name="description" rows="3" placeholder="Подробно описание на ситуацията..."
+                          style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
             </div>
 
-            <!-- Dispatch Options -->
+            <div style="margin-bottom: 20px;">
+                <label for="hazardous_materials" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Опасни вещества</label>
+                <textarea id="hazardous_materials" name="hazardous_materials" rows="2" placeholder="Идентифицирани опасни материали на място..."
+                          style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="action_plan" style="display: block; margin-bottom: 8px; color: var(--text-muted);">План за действие</label>
+                <textarea id="action_plan" name="action_plan" rows="2" placeholder="Предварителен план за действие..."
+                          style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); resize: vertical;"></textarea>
+            </div>
+
+            <!-- Team Selection -->
             <div style="background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 20px; margin-bottom: 20px;">
-                <h4 style="color: var(--text-muted); margin-bottom: 15px;">Разпределение</h4>
+                <h4 style="color: var(--text-muted); margin-bottom: 15px;">Изпращане на екипи</h4>
 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="dispatch_now" name="dispatch_now" value="1" onchange="toggleTeamSelection()">
-                        <span style="color: var(--text-light);">Изпрати екип веднага</span>
-                    </label>
-                </div>
-
-                <div id="teamSelection" style="display: none;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 500;">Изберете екипи</label>
-                    <select id="team_ids" name="team_ids" multiple style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); min-height: 100px;">
+                    <label for="team_ids" style="display: block; margin-bottom: 8px; color: var(--text-muted);">Изберете екипи за изпращане</label>
+                    <select id="team_ids" name="team_ids" multiple
+                            style="width: 100%; padding: 12px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light); min-height: 100px;">
                         {% for team in teams %}
                             <option value="{{ team.id }}">{{ team.name }} ({{ team.status }}) - {{ team.station or 'Няма станция' }}</option>
                         {% endfor %}
@@ -112,7 +148,6 @@
                 </div>
             </div>
 
-            <!-- Submit -->
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button type="submit" class="btn btn-primary" style="flex: 1; padding: 14px; font-size: 16px;">
                     <i class="fas fa-save"></i> Създай произшествие
@@ -125,22 +160,95 @@
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-function toggleTeamSelection() {
-    const checked = document.getElementById('dispatch_now').checked;
-    document.getElementById('teamSelection').style.display = checked ? 'block' : 'none';
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map
+    const defaultLat = 42.6977;
+    const defaultLng = 23.3219;
+    const map = L.map('locationMap').setView([defaultLat, defaultLng], 13);
 
-// Auto-fill coordinates if browser supports geolocation
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        document.getElementById('latitude').value = position.coords.latitude;
-        document.getElementById('longitude').value = position.coords.longitude;
-    }, function() {
-        // User denied or error - use default Bulgaria center
-        document.getElementById('latitude').value = 42.6977;
-        document.getElementById('longitude').value = 23.3219;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Marker for selected location
+    let marker = L.marker([defaultLat, defaultLng], {
+        draggable: true
+    }).addTo(map);
+
+    // Update coordinates when marker is dragged
+    marker.on('dragend', function() {
+        const pos = marker.getLatLng();
+        document.getElementById('latitude').value = pos.lat.toFixed(8);
+        document.getElementById('longitude').value = pos.lng.toFixed(8);
+        updateAddress(pos.lat, pos.lng);
     });
-}
+
+    // Click on map to set location
+    map.on('click', function(e) {
+        const latlng = e.latlng;
+        marker.setLatLng(latlng);
+        document.getElementById('latitude').value = latlng.lat.toFixed(8);
+        document.getElementById('longitude').value = latlng.lng.toFixed(8);
+        updateAddress(latlng.lat, latlng.lng);
+    });
+
+    // Update address using reverse geocoding
+    function updateAddress(lat, lng) {
+        // Use OpenStreetMap Nominatim for reverse geocoding
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    const addressInput = document.getElementById('address');
+                    if (!addressInput.value) {
+                        addressInput.value = data.display_name;
+                    }
+                }
+            })
+            .catch(() => {
+                // Silently fail - user can enter address manually
+            });
+    }
+
+    // Current location
+    document.getElementById('useCurrentLocation').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                map.setView([lat, lng], 15);
+                marker.setLatLng([lat, lng]);
+                document.getElementById('latitude').value = lat.toFixed(8);
+                document.getElementById('longitude').value = lng.toFixed(8);
+                updateAddress(lat, lng);
+            }, function() {
+                alert('Неуспешно определяне на местоположение. Моля, въведете координати ръчно.');
+            });
+        } else {
+            alert('Геолокацията не се поддържа от вашия браузър.');
+        }
+    });
+
+    // Manual coordinate entry
+    document.getElementById('latitude').addEventListener('change', function() {
+        const lat = parseFloat(this.value);
+        const lng = parseFloat(document.getElementById('longitude').value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            map.setView([lat, lng], 15);
+            marker.setLatLng([lat, lng]);
+        }
+    });
+
+    document.getElementById('longitude').addEventListener('change', function() {
+        const lng = parseFloat(this.value);
+        const lat = parseFloat(document.getElementById('latitude').value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            map.setView([lat, lng], 15);
+            marker.setLatLng([lat, lng]);
+        }
+    });
+});
 </script>
 {% endblock %}

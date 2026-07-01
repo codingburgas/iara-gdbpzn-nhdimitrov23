@@ -1,0 +1,137 @@
+<!-- app/templates/incidents/map_view.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ incident.incident_number }} - Карта | ГДПБЗН{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #incidentMap {
+        height: 70vh;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+    .incident-info {
+        background: var(--dark-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 0;">
+    <a href="{{ url_for('incidents.view', incident_id=incident.id) }}" class="btn btn-secondary" style="margin-bottom: 20px;">
+        <i class="fas fa-arrow-left"></i> Назад към произшествието
+    </a>
+
+    <div class="incident-info">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 32px;">{{ incident.incident_number }}</h1>
+                <p style="color: var(--text-muted);">{{ incident.address }}</p>
+            </div>
+            <div>
+                <span style="display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px;
+                    {% if incident.status == 'reported' %}background: #f39c12; color: #fff;
+                    {% elif incident.status == 'dispatched' %}background: #3498db; color: #fff;
+                    {% elif incident.status == 'on_site' %}background: #e67e22; color: #fff;
+                    {% elif incident.status == 'in_progress' %}background: #e74c3c; color: #fff;
+                    {% else %}background: var(--text-muted); color: #fff;{% endif %}">
+                    {{ incident.status }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="incidentMap"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const lat = {{ incident.latitude }};
+    const lng = {{ incident.longitude }};
+
+    const map = L.map('incidentMap').setView([lat, lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Incident marker
+    const incidentIcon = L.divIcon({
+        html: `<i class="fas fa-fire" style="color: #e74c3c; font-size: 32px;"></i>`,
+        className: 'custom-div-icon',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+    });
+
+    L.marker([lat, lng], { icon: incidentIcon })
+        .addTo(map)
+        .bindPopup(`
+            <div style="min-width: 200px;">
+                <strong>{{ incident.incident_number }}</strong><br>
+                <span>Тип: {{ incident.type }}</span><br>
+                <span>Статус: {{ incident.status }}</span><br>
+                <span>Приоритет: {{ incident.priority }}/5</span>
+            </div>
+        `)
+        .openPopup();
+
+    // Load nearby incidents and teams
+    fetch('/api/incidents/nearby?lat=' + lat + '&lng=' + lng + '&radius=10')
+        .then(response => response.json())
+        .then(incidents => {
+            incidents.forEach(inc => {
+                if (inc.id !== {{ incident.id }}) {
+                    const marker = L.marker([inc.latitude, inc.longitude], {
+                        icon: L.divIcon({
+                            html: `<i class="fas fa-fire" style="color: #e67e22; font-size: 20px;"></i>`,
+                            className: 'custom-div-icon',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div>
+                            <strong>${inc.incident_number}</strong><br>
+                            <span>${inc.address}</span><br>
+                            <a href="/incidents/${inc.id}" style="color: #e74c3c;">Преглед</a>
+                        </div>
+                    `);
+                }
+            });
+        });
+
+    // Load teams
+    fetch('/teams/api/locations')
+        .then(response => response.json())
+        .then(teams => {
+            teams.forEach(team => {
+                if (team.latitude && team.longitude) {
+                    const color = team.status === 'available' ? '#2ecc71' : '#3498db';
+                    const marker = L.marker([team.latitude, team.longitude], {
+                        icon: L.divIcon({
+                            html: `<i class="fas fa-truck" style="color: ${color}; font-size: 24px;"></i>`,
+                            className: 'custom-div-icon',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div>
+                            <strong>${team.name}</strong><br>
+                            <span>Статус: ${team.status}</span>
+                        </div>
+                    `);
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

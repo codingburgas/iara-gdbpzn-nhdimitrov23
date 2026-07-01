@@ -26,7 +26,7 @@
                     <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <strong style="color: var(--text-light); font-size: 13px;">
-                                {{ msg.user_name or 'Система' }}
+                                {{ msg.first_name }} {{ msg.last_name or 'Система' }}
                             </strong>
                             <span style="color: var(--text-muted); font-size: 11px;">
                                 {{ msg.created_at.strftime('%H:%M %d.%m.%Y') if msg.created_at else '' }}
@@ -42,6 +42,7 @@
 
             <!-- Send Message -->
             <form method="POST" action="{{ url_for('communication.send_message') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="incident_id" value="{{ incident.id }}">
                 <div style="display: flex; gap: 10px;">
                     <input type="text" name="content" required placeholder="Напишете съобщение..." style="flex: 1; padding: 10px; background: var(--dark-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-light);">
@@ -89,7 +90,6 @@
 
 <script>
 function insertTemplate(content) {
-    // Find the message input field and insert the template
     const input = document.querySelector('input[name="content"]');
     if (input) {
         input.value = content;
@@ -97,7 +97,6 @@ function insertTemplate(content) {
     }
 }
 
-// Auto-scroll to bottom of chat
 document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.getElementById('chatMessages');
     if (chatContainer) {

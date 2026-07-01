@@ -1,10 +1,10 @@
-# app/routes/map.py
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from app.db import db
 from app.models import Incident, Team
 from datetime import datetime
 import json
+from psycopg2.extras import RealDictCursor
 
 map_bp = Blueprint('map', __name__)
 
@@ -20,15 +20,13 @@ def index():
 @login_required
 def api_data():
     """Get map data with all active units and incidents"""
+    conn = db.get_connection()
+
     # Active incidents
     active_incidents = Incident.get_active()
 
-    # Active teams
-    conn = db.get_connection()
-    with conn.cursor(cursor_factory=db.get_cursor().__self__.__class__) as cur:
-        from psycopg2.extras import RealDictCursor
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
+    # Active teams - using proper cursor
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("SELECT * FROM teams WHERE status IN ('dispatched', 'on_site')")
         active_teams = cur.fetchall()
 
@@ -81,3 +79,22 @@ def update_fire_front(incident_id):
     incident.save()
 
     return jsonify({'success': True})
+
+
+@map_bp.route('/api/incident/<int:incident_id>/location')
+@login_required
+def get_incident_location(incident_id):
+    """Get incident location details"""
+    incident = Incident.get_by_id(incident_id)
+    if not incident:
+        return jsonify({'error': 'Incident not found'}), 404
+
+    return jsonify({
+        'id': incident.id,
+        'incident_number': incident.incident_number,
+        'latitude': float(incident.latitude) if incident.latitude else None,
+        'longitude': float(incident.longitude) if incident.longitude else None,
+        'address': incident.address,
+        'status': incident.status,
+        'type': incident.type
+    })

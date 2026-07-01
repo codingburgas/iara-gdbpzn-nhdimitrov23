@@ -1,3 +1,4 @@
+# app/__init__.py
 from flask import Flask
 from flask_login import LoginManager
 from flask_socketio import SocketIO
@@ -42,13 +43,28 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = os.path.join('app', 'static', 'uploads')
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     app.config['DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
-    socketio.init_app(app, cors_allowed_origins="*")
+
+    # Initialize SocketIO with proper async mode
+    # Try eventlet first, fallback to threading
+    try:
+        import eventlet
+        socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
+    except ImportError:
+        try:
+            import gevent
+            socketio.init_app(app, cors_allowed_origins="*", async_mode='gevent')
+        except ImportError:
+            socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+
     csrf.init_app(app)
-    CORS(app)
+    CORS(app, supports_credentials=True)
 
     from app.models import User
 
@@ -63,6 +79,7 @@ def create_app():
     from app.routes.communication import communication_bp
     from app.routes.admin import admin_bp
     from app.routes.main import main_bp
+    from app.routes.api import api_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(incidents_bp, url_prefix='/incidents')
@@ -71,6 +88,7 @@ def create_app():
     app.register_blueprint(communication_bp, url_prefix='/communication')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(main_bp)
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     if not app.debug:
         if not os.path.exists('logs'):
