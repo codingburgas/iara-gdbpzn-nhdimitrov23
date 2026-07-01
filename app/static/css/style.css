@@ -558,3 +558,126 @@ footer {
         display: block;
     }
 }
+
+/* app/static/css/style.css - Add these PWA/Mobile styles at the end */
+
+/* Prevent text selection on mobile */
+.no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+    button,
+    .btn,
+    a,
+    input[type="submit"],
+    input[type="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Better spacing for mobile forms */
+    input, select, textarea {
+        font-size: 16px !important; /* Prevents iOS zoom */
+        padding: 12px !important;
+    }
+
+    /* Safe area for notched phones */
+    .container {
+        padding-left: env(safe-area-inset-left, 15px);
+        padding-right: env(safe-area-inset-right, 15px);
+    }
+
+    /* Bottom navigation spacing */
+    main {
+        padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+}
+
+/* PWA splash screen */
+@media (display-mode: standalone) {
+    body {
+        background-color: #0e0e0e;
+    }
+
+    /* Hide browser chrome */
+    .navbar {
+        padding-top: env(safe-area-inset-top, 10px);
+    }
+}
+
+/* Pull-to-refresh indicator */
+.pull-to-refresh {
+    display: none;
+    text-align: center;
+    padding: 10px;
+    color: var(--text-muted);
+}
+
+.pull-to-refresh.active {
+    display: block;
+}
+
+/* Touch feedback */
+.touch-feedback {
+    transition: transform 0.1s ease;
+}
+
+.touch-feedback:active {
+    transform: scale(0.95);
+}
+
+/* Improved scroll on mobile */
+* {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Disable auto-zoom on input focus */
+input, textarea, select {
+    font-size: 16px !important;
+}
+
+/* Better mobile navigation */
+@media (max-width: 768px) {
+    .navbar-links.active {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--dark-bg);
+        z-index: 999;
+        padding-top: 60px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .navbar-links.active li a {
+        font-size: 20px;
+        height: auto;
+        line-height: 1.5;
+        padding: 10px 20px;
+        border-right: none;
+        border-bottom: none;
+    }
+
+    .menu-toggle {
+        z-index: 1000;
+    }
+
+    /* Close button for mobile menu */
+    .navbar-links.active::before {
+        content: '✕';
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 30px;
+        color: var(--text-light);
+        cursor: pointer;
+    }
+}
